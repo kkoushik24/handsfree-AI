@@ -1,6 +1,7 @@
-"""Core data contracts and Pydantic models for FastAPI endpoints."""
+"""Core data contracts and Pydantic models for the FastAPI endpoints."""
 from enum import Enum
-from typing import Any, Optional
+from typing import Literal, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -20,11 +21,13 @@ class UIElement(BaseModel):
     desc: Optional[str] = None
     bounds: Optional[list[int]] = None
     clickable: bool = True
+    editable: bool = False
+    sensitive: bool = False  # password / OTP / payment field, set by Android
 
 
 class PlanRequest(BaseModel):
     task_id: Optional[str] = None
-    goal: str
+    goal: str = Field(min_length=1)
     app_package: Optional[str] = None
     elements: list[UIElement] = Field(default_factory=list)
     screen_hash: Optional[str] = ""
@@ -33,11 +36,11 @@ class PlanRequest(BaseModel):
 
 
 class Action(BaseModel):
-    type: str
+    type: str  # tap | type | scroll | back | open_app | ask_user | done
     target_id: Optional[str] = None
     text: Optional[str] = None
     reason: Optional[str] = None
-    needs_approval: bool = False
+    needs_approval: bool = True
 
 
 class Step(BaseModel):
@@ -45,13 +48,20 @@ class Step(BaseModel):
     target: Optional[str] = None
     text: Optional[str] = None
     reason: Optional[str] = None
-    needs_approval: bool = False
+    needs_approval: bool = True
 
 
 class PlanResponse(BaseModel):
     task_id: str
     step: int
-    screen_hash: str
-    action: Optional[Action] = None
-    steps: list[Step] = Field(default_factory=list)
+    screen_hash: str  # echoed back so Android can detect stale actions
+    action: Optional[Action] = None  # the NEXT action to execute (first step)
+    steps: list[Step] = Field(default_factory=list)  # full plan preview
     error: Optional[str] = None
+
+
+class Health(BaseModel):
+    status: Literal["ok", "degraded"]
+    model: str
+    ollama_reachable: bool
+    model_ready: bool

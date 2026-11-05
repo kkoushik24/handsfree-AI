@@ -1,25 +1,34 @@
-"""Model output schemas, robust parsing utilities, safety filters, and Ollama planning handlers."""
+"""Planning logic: Ollama call, robust parsing, safety rules and fallbacks."""
 import json
 import os
 import re
-from typing import Any
+import uuid
+from typing import Optional
+
 import httpx
 from pydantic import BaseModel, Field
 
-from contracts import Action, ActionType, PlanRequest, PlanResponse, Step
+from contracts import Action, ActionType, PlanRequest, PlanResponse, Step, UIElement
 
 MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 MODEL_NAME = MODEL
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "60"))
+STRICT_TARGETS = os.getenv("STRICT_TARGETS", "1") == "1"  # set STRICT_TARGETS=0 to allow unknown targets
+MAX_ELEMENTS = 40
+DEMO_GOAL = "send message to rahul saying hello"  # deterministic offline demo path
 
-SYSTEM_PROMPT = """You are an Android UI automation assistant. Given a user goal and screen context, return a JSON object with ordered execution steps.
+SYSTEM_PROMPT = """You are an Android UI automation assistant for a user who cannot use their hands.
+Given the user's goal and the current screen elements, return a JSON object with ordered execution steps.
 
 Valid actions: open_app, tap, type_text, scroll, back, ask_user, done.
 
 Rules:
-1. First step should open the required app if not already open.
+1. The first step is the NEXT action to perform right now. If the required app is not open, it should be open_app.
 2. The last step must always have action "done".
-3. Return ONLY valid JSON matching this schema:
+3. For tap and type_text, use ONLY targets that appear in Screen Elements (by id or text). Never invent elements.
+4. If you are unsure, or the field is a password, OTP, PIN or payment field, use ask_user.
+5. Return ONLY valid JSON matching this schema:
 {
   "steps": [
     {"action": "open_app", "target": "AppName", "reason": "Open App"},
@@ -30,232 +39,253 @@ Rules:
 }
 """
 
+SENSITIVE_KEYWORDS = (
+    "password", "passcode", "pin", "upi pin", "otp", "cvv",
+    "credit card", "debit card", "card number",
+    "confirm payment", "pay now", "payment", "transfer",
+)
+_SENSITIVE_RE = re.compile(r"\b(" + "|".join(re.escape(k) for k in SENSITIVE_KEYWORDS) + r")\b", re.IGNORECASE)
+
+ACTION_ALIASES = {
+    "type": "type_text", "input": "type_text", "enter_text": "type_text",
+    "click": "tap", "press": "tap",
+    "open": "open_app", "launch": "open_app",
+    "finish": "done", "complete": "done",
+}
+
 
 class SafetyPlan(BaseModel):
-    """Container for validated and safety-checked plan steps."""
     steps: list[Step] = Field(default_factory=list)
     needs_user: bool = False
 
 
-def parse_steps(raw: str) -> list[Step]:
-    """Extract and parse steps robustly, handling model chatter or loose formatting."""
+# --------------------------------------------------------------------------- parsing
+
+def _as_str(value) -> Optional[str]:
+    return None if value is None else str(value)
+
+
+def _extract_json(raw: str):
     text = raw.strip()
-
-    if "```" in text:
-        match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
-        if match:
-            text = match.group(1).strip()
-        else:
-            text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.MULTILINE).strip()
-
-    parsed = None
+    fence = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
+    if fence:
+        text = fence.group(1).strip()
     try:
-        parsed = json.loads(text)
+        return json.loads(text)
     except Exception:
-        brace_match = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", text)
-        if brace_match:
-            try:
-                parsed = json.loads(brace_match.group(1))
-            except Exception:
-                pass
+        pass
+    braces = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", text)
+    if braces:
+        try:
+            return json.loads(braces.group(1))
+        except Exception:
+            return None
+    return None
 
-    if not parsed:
-        return [
-            Step(action=ActionType.open_app, target="App", reason=text[:100]),
-            Step(action=ActionType.done, reason="Task completed")
-        ]
 
+def parse_steps(raw: str) -> list[Step]:
+    """Parse model output into steps. Returns [] if nothing usable was found."""
+    parsed = _extract_json(raw)
     if isinstance(parsed, dict):
-        steps_raw = parsed.get("steps", [])
+        if isinstance(parsed.get("steps"), list):
+            steps_raw = parsed["steps"]
+        elif "action" in parsed:
+            steps_raw = [parsed]
+        else:
+            steps_raw = []
     elif isinstance(parsed, list):
         steps_raw = parsed
     else:
         steps_raw = []
 
-    steps = []
+    valid = {a.value for a in ActionType}
+    steps: list[Step] = []
     for s in steps_raw:
-        if isinstance(s, dict):
-            act_str = str(s.get("action", "tap")).lower()
-            if act_str not in [a.value for a in ActionType]:
-                act_str = "tap"
-            steps.append(Step(
-                action=act_str,
-                target=s.get("target"),
-                text=s.get("text"),
-                reason=s.get("reason", "Executing step"),
-                needs_approval=s.get("needs_approval", False)
-            ))
-        elif isinstance(s, Step):
-            steps.append(s)
-
+        if not isinstance(s, dict):
+            continue
+        act = str(s.get("action", "")).strip().lower()
+        act = ACTION_ALIASES.get(act, act)
+        if act not in valid:
+            act = ActionType.ask_user.value
+        steps.append(Step(
+            action=act,
+            target=_as_str(s.get("target")),
+            text=_as_str(s.get("text")),
+            reason=_as_str(s.get("reason")) or "Executing step",
+            needs_approval=True,
+        ))
     return steps
 
 
-def apply_safety(steps: list[Step]) -> SafetyPlan:
-    """Detect sensitive targets or input fields (passwords, payments, OTPs)
-    and rewrite their action to ActionType.ask_user.
-    """
-    sensitive_keywords = (
-        "password",
-        "confirm payment",
-        "payment",
-        "pay",
-        "pin",
-        "otp",
-        "cvv",
-        "credit card",
-        "debit card",
-        "upi pin",
-        "transfer",
+# --------------------------------------------------------------------------- safety
+
+def find_element(elements: list[UIElement], target: Optional[str]) -> Optional[UIElement]:
+    """Match a model-provided target against screen elements by id, then exact text, then partial text."""
+    if not target:
+        return None
+    t = target.strip().lower()
+    for e in elements:
+        if e.id.lower() == t:
+            return e
+    for e in elements:
+        if t in ((e.text or "").lower(), (e.desc or "").lower()):
+            return e
+    for e in elements:
+        for label in ((e.text or "").lower(), (e.desc or "").lower()):
+            if label and (t in label or label in t):
+                return e
+    return None
+
+
+def _ask_user(step: Step, reason: str) -> Step:
+    # drop any text so a password or OTP is never carried forward
+    return Step(action=ActionType.ask_user, target=step.target, text=None, reason=reason, needs_approval=True)
+
+
+def apply_safety(steps: list[Step], elements: Optional[list[UIElement]] = None) -> SafetyPlan:
+    """Block sensitive steps, check the next step against the real screen, and force approval."""
+    elements = elements or []
+    safe: list[Step] = []
+
+    for i, s in enumerate(steps):
+        target, text = s.target or "", s.text or ""
+
+        if _SENSITIVE_RE.search(target) or _SENSITIVE_RE.search(text):
+            safe.append(_ask_user(s, "Sensitive action detected. Please do this yourself."))
+            continue
+
+        # only the first step is executed next, so only it is checked against the live screen
+        if i == 0 and elements and s.action in (ActionType.tap, ActionType.type_text):
+            el = find_element(elements, s.target)
+            if el is None:
+                if STRICT_TARGETS:
+                    safe.append(_ask_user(s, f"I could not find '{s.target}' on this screen."))
+                    continue
+            elif el.sensitive or _SENSITIVE_RE.search(el.text or "") or _SENSITIVE_RE.search(el.desc or ""):
+                safe.append(_ask_user(s, "That field is sensitive. Please do this yourself."))
+                continue
+            else:
+                s = s.model_copy(update={"target": el.id})
+
+        safe.append(s.model_copy(update={"needs_approval": s.action != ActionType.done}))
+
+    needs_user = any(s.action == ActionType.ask_user for s in safe)
+    return SafetyPlan(steps=safe, needs_user=needs_user)
+
+
+# --------------------------------------------------------------------------- responses
+
+def _build_response(req: PlanRequest, steps: list[Step], error: Optional[str] = None) -> PlanResponse:
+    first = steps[0]
+    action_type = "type" if first.action == ActionType.type_text else first.action.value
+    action = Action(
+        type=action_type,
+        target_id=first.target,
+        text=first.text,
+        reason=first.reason,
+        needs_approval=first.needs_approval,
+    )
+    return PlanResponse(
+        task_id=req.task_id or f"task-{uuid.uuid4().hex[:8]}",
+        step=req.step,
+        screen_hash=req.screen_hash or "",
+        action=action,
+        steps=steps,
+        error=error,
     )
 
-    safe_steps: list[Step] = []
 
-    for s in steps:
-        target = (s.target or "").lower()
-        text = (s.text or "").lower()
-
-        is_sensitive = any(kw in target or kw in text for kw in sensitive_keywords)
-
-        if is_sensitive:
-            safe_steps.append(
-                Step(
-                    action=ActionType.ask_user,
-                    target=s.target,
-                    text=s.text,
-                    reason="Sensitive action detected requiring explicit user approval",
-                    needs_approval=True,
-                )
-            )
-        else:
-            safe_steps.append(s)
-
-    needs_user = any(s.action == ActionType.ask_user or s.needs_approval for s in safe_steps)
-    return SafetyPlan(steps=safe_steps, needs_user=needs_user)
+def _error_response(req: PlanRequest, error: str, reason: str) -> PlanResponse:
+    step = Step(action=ActionType.ask_user, reason=reason, needs_approval=True)
+    return _build_response(req, [step], error=error)
 
 
-async def ollama_status() -> tuple[bool, bool]:
-    """Check if Ollama server is running and the target model is loaded."""
-    try:
-        async with httpx.AsyncClient(timeout=1.5) as client:
-            resp = await client.get(f"{OLLAMA_HOST}/api/tags")
-            if resp.status_code == 200:
-                models = [m.get("name", "") for m in resp.json().get("models", [])]
-                model_ready = any(MODEL in m for m in models)
-                return True, model_ready
-    except Exception:
-        pass
-    return True, True
+def _s(action: ActionType, target: Optional[str] = None, text: Optional[str] = None, reason: str = "") -> Step:
+    return Step(action=action, target=target, text=text, reason=reason,
+                needs_approval=action != ActionType.done)
 
 
 def mock_plan(req: PlanRequest) -> PlanResponse:
-    """Generate plan responses for testing and fallback demo flows."""
-    goal_lower = req.goal.lower()
-
-    if "whatsapp" in goal_lower or "rahul" in goal_lower or "message" in goal_lower:
-        action = Action(
-            type="open_app",
-            target_id="com.whatsapp",
-            text=None,
-            reason="Open WhatsApp to message Rahul",
-            needs_approval=False,
-        )
-        step_items = [
-            Step(action=ActionType.open_app, target="WhatsApp", reason="Open WhatsApp", needs_approval=False),
-            Step(action=ActionType.tap, target="Rahul", reason="Select chat with Rahul", needs_approval=False),
-            Step(action=ActionType.type_text, target="Message", text="hello", reason="Type hello message", needs_approval=False),
-            Step(action=ActionType.done, reason="Message sent successfully", needs_approval=False),
+    """Canned plan for the offline demo and for testing without the AI model."""
+    goal = req.goal.lower()
+    if "whatsapp" in goal or "rahul" in goal or "message" in goal:
+        steps = [
+            _s(ActionType.open_app, "WhatsApp", reason="Open WhatsApp"),
+            _s(ActionType.tap, "Rahul", reason="Select chat with Rahul"),
+            _s(ActionType.type_text, "Message", "hello", "Type hello message"),
+            _s(ActionType.done, reason="Message sent successfully"),
         ]
     else:
-        action = Action(
-            type="open_app",
-            target_id="com.example.app",
-            text=None,
-            reason=f"Open app for goal: {req.goal}",
-            needs_approval=False,
-        )
-        step_items = [
-            Step(action=ActionType.open_app, target="App", reason=f"Open app for goal: {req.goal}", needs_approval=False),
-            Step(action=ActionType.done, reason="Task completed", needs_approval=False),
+        steps = [
+            _s(ActionType.open_app, "App", reason=f"Open app for goal: {req.goal}"),
+            _s(ActionType.done, reason="Task completed"),
         ]
+    return _build_response(req, steps)
 
-    return PlanResponse(
-        task_id=req.task_id or "task-demo-1",
-        step=req.step,
-        screen_hash=req.screen_hash,
-        action=action,
-        steps=step_items,
-        error=None,
-    )
+
+# --------------------------------------------------------------------------- Ollama
+
+async def _call_ollama(prompt: str) -> str:
+    async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+        resp = await client.post(
+            f"{OLLAMA_HOST}/api/generate",
+            json={
+                "model": MODEL,
+                "system": SYSTEM_PROMPT,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json",
+                "options": {"temperature": 0},
+            },
+        )
+        resp.raise_for_status()
+        return resp.json().get("response", "")
+
+
+async def ollama_status() -> tuple[bool, bool]:
+    """Returns (ollama_reachable, model_ready)."""
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            resp = await client.get(f"{OLLAMA_HOST}/api/tags")
+            resp.raise_for_status()
+            names = [m.get("name", "") for m in resp.json().get("models", [])]
+            return True, any(n == MODEL or n.startswith(MODEL) for n in names)
+    except Exception:
+        return False, False
 
 
 async def plan(req: PlanRequest) -> PlanResponse:
-    """Generate plan steps via Ollama with robust parsing and fallback."""
-    if req.goal.strip().lower() == "send message to rahul saying hello":
+    """Generate the next action (plus plan preview) with validation, safety and clear errors."""
+    if req.goal.strip().lower() == DEMO_GOAL:
         return mock_plan(req)
 
-    elements_summary = []
-    for el in (req.elements or [])[:20]:
-        elements_summary.append({
-            "id": getattr(el, "id", str(el)),
-            "text": getattr(el, "text", None),
-            "desc": getattr(el, "desc", getattr(el, "content_description", None))
-        })
-
-    user_prompt = (
+    elements = [
+        {"id": e.id, "text": e.text, "desc": e.desc, "sensitive": e.sensitive}
+        for e in req.elements[:MAX_ELEMENTS]
+    ]
+    prompt = (
         f"Goal: {req.goal}\n"
-        f"Current App: {getattr(req, 'app_package', 'Home Screen')}\n"
-        f"Screen Elements: {json.dumps(elements_summary)}\n"
-        f"History: {getattr(req, 'history', [])}"
+        f"Current App: {req.app_package or 'Home Screen'}\n"
+        f"Screen Elements: {json.dumps(elements)}\n"
+        f"History: {req.history[-6:]}"
     )
 
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(
-                f"{OLLAMA_HOST}/api/generate",
-                json={
-                    "model": MODEL,
-                    "system": SYSTEM_PROMPT,
-                    "prompt": user_prompt,
-                    "stream": False,
-                },
-            )
+    steps: list[Step] = []
+    for _ in range(2):  # retry once on malformed output
+        try:
+            raw = await _call_ollama(prompt)
+        except Exception as exc:
+            print(f"Ollama error: {exc}")
+            return _error_response(req, f"ollama_unavailable: {exc}", "The AI model is not reachable right now.")
+        steps = parse_steps(raw)
+        if steps:
+            break
 
-        if resp.status_code == 200:
-            raw_data = resp.json()
-            raw_text = raw_data.get("response", "{}")
+    if not steps:
+        return _error_response(req, "malformed_model_output", "I could not work out a safe next step.")
 
-            steps = parse_steps(raw_text)
-            if steps:
-                last_act = str(steps[-1].action).split(".")[-1]
-                if last_act != "done":
-                    steps.append(Step(action=ActionType.done, reason="Task completed"))
+    if steps[-1].action != ActionType.done:
+        steps.append(Step(action=ActionType.done, reason="Task completed", needs_approval=False))
 
-                safety_plan = apply_safety(steps)
-                s0 = safety_plan.steps[0]
-
-                raw_action_type = str(s0.action).split(".")[-1]
-                action_type_mapped = "type" if raw_action_type == "type_text" else raw_action_type
-                if action_type_mapped not in ("tap", "type", "scroll", "back", "open_app", "ask_user", "done"):
-                    action_type_mapped = "tap"
-
-                first_action = Action(
-                    type=action_type_mapped,
-                    target_id=s0.target,
-                    text=s0.text,
-                    reason=s0.reason,
-                    needs_approval=s0.needs_approval,
-                )
-
-                return PlanResponse(
-                    task_id="task-ollama-live",
-                    step=req.step,
-                    screen_hash=getattr(req, "screen_hash", ""),
-                    action=first_action,
-                    steps=safety_plan.steps,
-                    error=None,
-                )
-    except Exception as exc:
-        print(f"Ollama inference error detail: {exc}")
-
-    return mock_plan(req)
+    safety = apply_safety(steps, req.elements)
+    return _build_response(req, safety.steps)

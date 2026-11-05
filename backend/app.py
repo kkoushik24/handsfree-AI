@@ -1,16 +1,19 @@
-"""FastAPI application server for handsfree AI automation."""
-import os
-from fastapi import FastAPI, File, HTTPException, UploadFile, Response
-from fastapi.middleware.cors import CORSMiddleware
+"""FastAPI application server for HandsFree AI. Run: uvicorn app:app --host 0.0.0.0 --port 8000 --reload"""
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # must run before the local imports below, which read environment variables
 
-from contracts import PlanRequest, PlanResponse
-from model_schema import ollama_status, plan
+import httpx
+from fastapi import FastAPI, File, HTTPException, Query, Request, Response, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+import model_schema
+from contracts import Health, PlanRequest, PlanResponse
+from model_schema import mock_plan, ollama_status, plan
 from voice import text_to_speech, transcribe_audio
 
-app = FastAPI(title="Handsfree AI Backend", version="1.0.0")
+app = FastAPI(title="HandsFree AI Backend", version="1.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,41 +24,53 @@ app.add_middleware(
 )
 
 
-@app.get("/health")
+@app.exception_handler(Exception)
+async def unhandled_error_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"error": "internal_error", "details": str(exc)})
+
+
+@app.get("/health", response_model=Health)
 async def health_check():
-    """Verify backend health and Ollama connectivity status."""
+    """Backend health and Ollama connectivity. 'degraded' means the AI model is not ready."""
     reachable, ready = await ollama_status()
-    model_name = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
-    return {
-        "status": "ok",
-        "model": model_name,
-        "ollama_reachable": reachable,
-        "model_ready": ready,
-    }
+    return Health(
+        status="ok" if reachable and ready else "degraded",
+        model=model_schema.MODEL,
+        ollama_reachable=reachable,
+        model_ready=ready,
+    )
 
 
 @app.post("/plan", response_model=PlanResponse)
-async def generate_plan(req: PlanRequest):
-    """Generate task execution plan steps based on user goal and screen context."""
+async def generate_plan(req: PlanRequest, mock: bool = False):
+    """Next action (plus plan preview) for the user's goal and current screen. ?mock=true skips the AI model."""
+    if mock:
+        return mock_plan(req)
     return await plan(req)
 
 
 @app.post("/speak")
-async def speak(text: str):
-    """Convert input text to speech audio stream."""
+async def speak(text: str = Query(..., min_length=1, max_length=500)):
+    """Text to speech (ElevenLabs). Returns mp3 audio."""
     try:
         audio_bytes = await text_to_speech(text)
-        return Response(content=audio_bytes, media_type="audio/mpeg")
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+    except ValueError as exc:  # missing API key
+        raise HTTPException(status_code=503, detail=str(exc))
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"elevenlabs_error: {exc}")
+    return Response(content=audio_bytes, media_type="audio/mpeg")
 
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
-    """Transcribe uploaded audio file to text."""
+    """Speech to text (ElevenLabs). Upload an audio file in the 'file' field."""
     try:
         audio_bytes = await file.read()
-        text = await transcribe_audio(audio_bytes)
+        text = await transcribe_audio(
+            audio_bytes,
+            filename=file.filename or "audio.mp3",
+            content_type=file.content_type or "audio/mpeg",
+        )
         return {"text": text}
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc))
