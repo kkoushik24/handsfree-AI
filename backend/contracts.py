@@ -1,8 +1,33 @@
 """API contract shared with the Android app. Change field names only after telling the team."""
+from __future__ import annotations
+
+from enum import Enum
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
+
+# --- Action Types & Step Definitions ---
+
+class ActionType(str, Enum):
+    tap = "tap"
+    type_text = "type_text"
+    ask_user = "ask_user"
+    scroll = "scroll"
+    open_app = "open_app"
+    back = "back"
+    done = "done"
+
+
+class Step(BaseModel):
+    action: ActionType | str
+    target: Optional[str] = None
+    text: Optional[str] = None
+    reason: str = ""
+    needs_approval: bool = False
+
+
+# --- Android App Contracts ---
 
 class UiElement(BaseModel):
     id: str
@@ -14,7 +39,7 @@ class UiElement(BaseModel):
 
 
 class PlanRequest(BaseModel):
-    task_id: str
+    task_id: str = ""
     step: int = 0
     goal: str = Field(min_length=1)
     app_package: str = ""
@@ -32,10 +57,11 @@ class Action(BaseModel):
 
 
 class PlanResponse(BaseModel):
-    task_id: str
-    step: int
-    screen_hash: str  # echoed back so Android can detect stale actions
-    action: Action
+    task_id: str = ""
+    step: int = 0
+    screen_hash: str = ""  # echoed back so Android can detect stale actions
+    action: Optional[Action] = None
+    steps: list[Step] = Field(default_factory=list)
     error: Optional[str] = None
 
 

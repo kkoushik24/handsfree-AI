@@ -2,6 +2,8 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from voice import VoiceError, transcribe
 
 import model_schema
 from contracts import Health, PlanRequest, PlanResponse
@@ -35,3 +37,16 @@ async def plan(req: PlanRequest, mock: bool = False):
     if mock:
         return model_schema.mock_plan(req)
     return await model_schema.plan(req)
+
+@app.post("/voice/transcribe")
+async def transcribe_endpoint(file: UploadFile = File(...)):
+    try:
+        audio_bytes = await file.read()
+        text = await transcribe(
+            audio=audio_bytes,
+            filename=file.filename or "audio.wav",
+            content_type=file.content_type or "audio/wav",
+        )
+        return {"text": text}
+    except VoiceError as e:
+        raise HTTPException(status_code=502, detail=str(e))
