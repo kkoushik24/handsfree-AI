@@ -80,7 +80,7 @@ fun SettingsDialog(
                 ) {
                     Text(context.uiText(R.string.model_setup))
                 }
-                if (showDebugTools && onOpenDiagnostics != null) {
+                if (BuildConfig.DEBUG && showDebugTools && onOpenDiagnostics != null) {
                     TextButton(onClick = onOpenDiagnostics) {
                         Text(context.uiText(R.string.developer_tools))
                     }

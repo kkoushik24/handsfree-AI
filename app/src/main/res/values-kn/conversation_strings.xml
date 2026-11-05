@@ -132,5 +132,22 @@
     <string name="completion_review">ಕಂಡ ಮಾಹಿತಿ: %1$s\nನಿಮ್ಮ ಕೆಲಸ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ?</string>
     <string name="checking_screen">ಕಾರ್ಯದ ನಂತರ ಪರದೆ ಪರಿಶೀಲಿಸುತ್ತಿದ್ದೇನೆ</string>
     <string name="connection_error">ಈಗ ಸಂಪರ್ಕಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="clarification_title">ನಿಮಗಾಗಿ ಒಂದು ಪ್ರಶ್ನೆ</string>
+    <string name="confirmation_title">ದಯವಿಟ್ಟು ದೃಢೀಕರಿಸಿ</string>
+    <string name="diagnostics_connection">ಸಂಪರ್ಕ: %1$s</string>
+    <string name="diagnostics_last_action">ಕೊನೆಯ ಪ್ರಸ್ತಾವಿತ ಕಾರ್ಯ: %1$s</string>
+    <string name="diagnostics_history">ಇತ್ತೀಚಿನ ಕಾರ್ಯ ಇತಿಹಾಸ</string>
+    <string name="diagnostics_history_item">%1$s: %2$s</string>
+    <string name="diagnostics_observation">ಇತ್ತೀಚಿನ ಪರದೆ ವೀಕ್ಷಣೆ</string>
+    <string name="diagnostics_package">ಪ್ಯಾಕೇಜ್: %1$s</string>
+    <string name="diagnostics_observation_id">ವೀಕ್ಷಣೆ ID: %1$s</string>
+    <string name="diagnostics_blocked_reason">ತಡೆದ ಕಾರಣ: %1$s</string>
+    <string name="diagnostics_element">ID: %1$s\nಪಠ್ಯ: %2$s\nವಿವರಣೆ: %3$s\nಕಾರ್ಯಗಳು: %4$s</string>
+    <string name="diagnostics_inspect_label">ಪರಿಶೀಲಿಸಬೇಕಾದ ಆ್ಯಪ್ ಹೆಸರು ಅಥವಾ ಪ್ಯಾಕೇಜ್</string>
+    <string name="diagnostics_inspect">ಆ್ಯಪ್ ಪರಿಶೀಲಿಸಿ</string>
+    <string name="diagnostics_empty">ಪತ್ತೆ ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ.</string>
+    <string name="diagnostics_unavailable">ಲಭ್ಯವಿಲ್ಲ</string>
+    <string name="diagnostics_none">ಯಾವುದೂ ಇಲ್ಲ</string>
+    <string name="diagnostics_no_elements">ವೀಕ್ಷಿಸಿದ ಅಂಶಗಳಿಲ್ಲ.</string>
 </resources>
 

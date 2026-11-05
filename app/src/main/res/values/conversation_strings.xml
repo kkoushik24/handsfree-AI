@@ -132,5 +132,22 @@
     <string name="completion_review">Observed: %1$s\nDoes this complete your task?</string>
     <string name="checking_screen">Checking the screen after the action</string>
     <string name="connection_error">I couldn\'t connect right now. Check your connection and try again.</string>
+    <string name="clarification_title">A question for you</string>
+    <string name="confirmation_title">Please confirm</string>
+    <string name="diagnostics_connection">Connection: %1$s</string>
+    <string name="diagnostics_last_action">Last proposed action: %1$s</string>
+    <string name="diagnostics_history">Recent action history</string>
+    <string name="diagnostics_history_item">%1$s: %2$s</string>
+    <string name="diagnostics_observation">Latest screen observation</string>
+    <string name="diagnostics_package">Package: %1$s</string>
+    <string name="diagnostics_observation_id">Observation ID: %1$s</string>
+    <string name="diagnostics_blocked_reason">Blocked reason: %1$s</string>
+    <string name="diagnostics_element">ID: %1$s\nText: %2$s\nDescription: %3$s\nActions: %4$s</string>
+    <string name="diagnostics_inspect_label">App name or package to inspect</string>
+    <string name="diagnostics_inspect">Inspect app</string>
+    <string name="diagnostics_empty">No diagnostic data available.</string>
+    <string name="diagnostics_unavailable">Unavailable</string>
+    <string name="diagnostics_none">None</string>
+    <string name="diagnostics_no_elements">No observed elements.</string>
 </resources>
 
