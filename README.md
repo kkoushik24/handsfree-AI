@@ -734,7 +734,6 @@ handsfree-AI/
 ├── PRIVACY.md                        # Data handling, privacy, and sensitive input rules
 ├── SECURITY.md                       # Security policy and reporting process
 ├── CONTRIBUTING.md                   # Contribution workflow and guidelines
-├── LICENSE                           # Apache License 2.0
 ├── .env.example                      # Configuration template (no secrets)
 └── README.md                         # Project documentation
 ```
@@ -807,10 +806,7 @@ As outlined in [PRODUCT.md](PRODUCT.md), HandsFree AI is progressing through eig
 
 ---
 
-## 📜 License and Acknowledgements
-
-### License
-This project is licensed under the **Apache License, Version 2.0**. See the [LICENSE](LICENSE) file for details.
+## Acknowledgements
 
 ### Third-Party & Open Source Acknowledgements
 - **[Google Gemma](https://ai.google.dev/gemma):** Open weights foundation model providing lightweight, privacy-preserving reasoning.
@@ -826,6 +822,6 @@ This project is licensed under the **Apache License, Version 2.0**. See the [LIC
 
 **HandsFree AI — Technology that listens, so hands don't have to.**
 
-[Apache License 2.0](LICENSE)
+
 
 </div>
