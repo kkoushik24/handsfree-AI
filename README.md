@@ -14,9 +14,8 @@
 [![Compose](https://img.shields.io/badge/UI-Jetpack_Compose_Material_3-C66B88?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Reasoning](https://img.shields.io/badge/Reasoning-Gemma_4_E2B-725AA8?style=for-the-badge&logo=google&logoColor=white)](https://github.com/google/gemma_pytorch)
 [![Backend](https://img.shields.io/badge/Backend-FastAPI_0.115+-00897B?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Speech](https://img.shields.io/badge/Speech_AI-Sarvam_AI_(saaras:v3_|_bulbul:v3)-00897B?style=for-the-badge)](https://www.sarvam.ai/)
+[![Speech](https://img.shields.io/badge/Speech_AI-Eleven Labs_(saaras:v3_|_bulbul:v3)-00897B?style=for-the-badge)](https://elevenlabs.io/)
 [![Runtime](https://img.shields.io/badge/Runtime-Ollama_Local-725AA8?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.com/)
-[![License](https://img.shields.io/badge/License-Apache_2.0-765964?style=for-the-badge)](LICENSE)
 
 [The Problem](#-the-problem) · [What It Does](#-what-handsfree-ai-does) · [Main Features](#-main-features) · [System Architecture](#-system-architecture) · [How It Works](#-how-it-works) · [Tech Stack](#-technology-stack) · [Getting Started](#-getting-started) · [API Reference](#-api-endpoints-reference) · [Status](#-current-implementation-status) · [Safety & Privacy](#-safety-and-privacy)
 **Team Trojan Trio** · Sapthagiri NPS University
