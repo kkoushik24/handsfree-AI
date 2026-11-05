@@ -1,63 +1,74 @@
-"""ElevenLabs voice engine: text-to-speech (spoken confirmations) and speech-to-text (voice commands)."""
+"""Optional Sarvam adapter. Credentials and raw audio never enter logs."""
+import base64
+import binascii
 import os
-from typing import Optional
+from typing import Literal
 
 import httpx
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import Field
 
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB")  # default: Adam
-TTS_MODEL = os.getenv("ELEVENLABS_TTS_MODEL", "eleven_flash_v2_5")  # low latency, good for live demos
-STT_MODEL = os.getenv("ELEVENLABS_STT_MODEL", "scribe_v1")
-API_BASE = "https://api.elevenlabs.io/v1"
+from .contracts import StrictModel
 
-# Tiny in-memory cache so repeated phrases ("Done", "Approve?") cost no extra credits or latency.
-_tts_cache: dict[tuple[str, str], bytes] = {}
+router = APIRouter(prefix="/voice")
+Language = Literal["en-IN", "kn-IN"]
 
 
-async def text_to_speech(text: str, voice_id: Optional[str] = None) -> bytes:
-    """Convert text to speech audio (mp3 bytes) using ElevenLabs."""
-    if not ELEVENLABS_API_KEY:
-        raise ValueError("ELEVENLABS_API_KEY is not configured")
-
-    v_id = voice_id or ELEVENLABS_VOICE_ID
-    key = (v_id, text)
-    if key in _tts_cache:
-        return _tts_cache[key]
-
-    url = f"{API_BASE}/text-to-speech/{v_id}"
-    headers = {
-        "Accept": "audio/mpeg",
-        "Content-Type": "application/json",
-        "xi-api-key": ELEVENLABS_API_KEY,
-    }
-    payload = {
-        "text": text,
-        "model_id": TTS_MODEL,
-        "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
-    }
-
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(url, json=payload, headers=headers)
-        resp.raise_for_status()
-        audio = resp.content
-
-    if len(_tts_cache) < 100:
-        _tts_cache[key] = audio
-    return audio
+class SynthesisRequest(StrictModel):
+    text: str = Field(min_length=1, max_length=1000)
+    language_code: Language = "en-IN"
 
 
-async def transcribe_audio(audio_bytes: bytes, filename: str = "audio.mp3",
-                           content_type: str = "audio/mpeg") -> str:
-    """Transcribe audio bytes to text using ElevenLabs speech-to-text."""
-    if not ELEVENLABS_API_KEY:
-        raise ValueError("ELEVENLABS_API_KEY is not configured")
+class TranscriptionRequest(StrictModel):
+    audio_base64: str = Field(min_length=1, max_length=2_700_000)
+    language_code: Language = "en-IN"
+    audio_format: Literal["m4a", "wav"] = "m4a"
 
-    url = f"{API_BASE}/speech-to-text"
-    headers = {"xi-api-key": ELEVENLABS_API_KEY}
-    files = {"file": (filename, audio_bytes, content_type)}
-    data = {"model_id": STT_MODEL}  # required by the API
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        resp = await client.post(url, headers=headers, files=files, data=data)
-        resp.raise_for_status()
-        return resp.json().get("text", "")
+def key_headers():
+    key = os.getenv("SARVAM_API_KEY", "").strip()
+    if not key:
+        raise HTTPException(503, "Voice is unavailable. You can continue with text.")
+    return {"api-subscription-key": key}
+
+
+@router.post("/transcribe")
+async def transcribe(request: TranscriptionRequest, connection: Request):
+    headers = key_headers()
+    try:
+        audio = base64.b64decode(request.audio_base64, validate=True)
+    except (ValueError, binascii.Error):
+        raise HTTPException(422, "Invalid audio encoding") from None
+    if not audio or len(audio) > 2_000_000:
+        raise HTTPException(413, "Record a shorter instruction")
+    try:
+        client = connection.app.state.voice_http
+        response = await client.post("https://api.sarvam.ai/speech-to-text", headers=headers,
+                data={"model": "saaras:v3", "mode": "transcribe", "language_code": request.language_code},
+                files={"file": ("instruction." + request.audio_format, audio,
+                                "audio/wav" if request.audio_format == "wav" else "audio/mp4")})
+        response.raise_for_status()
+        transcript = response.json()["transcript"]
+        if not isinstance(transcript, str) or not transcript.strip():
+            raise ValueError("No speech recognized")
+        return {"transcript": transcript[:2000], "language_code": request.language_code}
+    except (httpx.HTTPError, ValueError, KeyError, TypeError):
+        raise HTTPException(502, "Speech recognition failed. Please use text input.") from None
+
+
+@router.post("/synthesize")
+async def synthesize(request: SynthesisRequest, connection: Request):
+    headers = key_headers()
+    try:
+        client = connection.app.state.voice_http
+        response = await client.post("https://api.sarvam.ai/text-to-speech", headers=headers,
+                json={"text": request.text, "language_code": request.language_code,
+                      "model": "bulbul:v3", "speaker": "shubh", "output_audio_codec": "wav"})
+        response.raise_for_status()
+        audio = response.json()["audios"][0]
+        if not isinstance(audio, str) or len(audio) > 8_000_000:
+            raise ValueError("Invalid audio response")
+        base64.b64decode(audio, validate=True)
+        return {"audio_base64": audio, "mime_type": "audio/wav"}
+    except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError, binascii.Error):
+        raise HTTPException(502, "Speech playback is unavailable. Read the text response.") from None
