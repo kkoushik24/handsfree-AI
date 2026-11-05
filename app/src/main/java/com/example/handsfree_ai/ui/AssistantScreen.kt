@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +50,11 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.handsfree_ai.accessibility.AccessibilityServiceConnectionState
+import com.example.handsfree_ai.accessibility.isHandsFreeAccessibilityEnabled
 import com.example.handsfree_ai.BuildConfig
 import com.example.handsfree_ai.R
 
@@ -77,7 +83,6 @@ fun AssistantScreen(
     conversation: List<AssistantConversationItem> = emptyList(),
     resultMessage: String? = null,
     resultIsError: Boolean = false,
-    screenAccessEnabled: Boolean = false,
     modelSetupState: ModelSetupUiState = ModelSetupUiState(failureRes = R.string.assistant_model_not_connected),
     pendingClarification: AssistantClarification? = null,
     pendingConfirmation: String? = null,
@@ -98,6 +103,9 @@ fun AssistantScreen(
     modelSetupCallbacks: ModelSetupCallbacks = ModelSetupCallbacks()
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var screenAccessEnabled by remember { mutableStateOf(isHandsFreeAccessibilityEnabled(context)) }
+    val screenAccessServiceConnected = AccessibilityServiceConnectionState.isConnected
     var selectedTab by rememberSaveable { mutableStateOf(AssistantTab.ASSISTANT) }
     var taskInput by rememberSaveable { mutableStateOf("") }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
@@ -108,6 +116,16 @@ fun AssistantScreen(
     var voiceEnabled by rememberSaveable { mutableStateOf(false) }
     var localConnectionNote by remember { mutableStateOf<String?>(null) }
     val tabStateHolder = rememberSaveableStateHolder()
+
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                screenAccessEnabled = isHandsFreeAccessibilityEnabled(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     BackHandler(enabled = selectedTab != AssistantTab.ASSISTANT) {
         selectedTab = AssistantTab.ASSISTANT
@@ -219,6 +237,18 @@ fun AssistantScreen(
                             Button(onClick = { screenDisclosureVisible = true }) { Text(context.uiText(R.string.screen_setup)) }
                         }
                     }
+                } else {
+                    Card(shape = RoundedCornerShape(20.dp)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(context.uiText(R.string.screen_title), style = MaterialTheme.typography.titleMedium)
+                            Text(context.uiText(if (screenAccessServiceConnected) R.string.screen_service_connected else R.string.screen_service_disconnected))
+                            if (!screenAccessServiceConnected) {
+                                TextButton(onClick = { screenDisclosureVisible = true }) {
+                                    Text(context.uiText(R.string.screen_settings))
+                                }
+                            }
+                        }
+                    }
                 }
 
                 if (!isConnected) {
@@ -319,6 +349,7 @@ fun AssistantScreen(
         selectedLanguage = language,
         onSelectLanguage = { code -> (context as? Activity)?.let { AppLanguage.select(it, code) } },
         screenAccessEnabled = screenAccessEnabled,
+        screenAccessServiceConnected = screenAccessServiceConnected,
         onOpenScreenSettings = { settingsVisible = false; screenDisclosureVisible = true },
         onOpenModelSetup = { settingsVisible = false; modelSetupVisible = true },
         onDismiss = { settingsVisible = false },

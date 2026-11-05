@@ -24,7 +24,7 @@
     <string name="food_help">Help me order food</string>
     <string name="food_help_button">Help me order food  →</string>
     <string name="screen_title">Let me help in your apps</string>
-    <string name="screen_intro">Allow screen access so I can read app controls and help with tasks you start.</string>
+    <string name="screen_intro">Enable the Accessibility Service to show its status. This foundation does not read, store, or send screen content or perform actions.</string>
     <string name="screen_setup">Set up screen access</string>
     <string name="reconnect">Try connecting again</string>
     <string name="you">You</string>
@@ -44,7 +44,7 @@
     <string name="developer_tools">Developer tools</string>
     <string name="done">Done</string>
     <string name="allow_screen">Allow screen access</string>
-    <string name="screen_disclosure">HandsFree reads visible controls to assist with tasks you start. Screen information is processed on your connected computer. You can stop access at any time.</string>
+    <string name="screen_disclosure">Android will enable the HandsFree AI Accessibility Service. This foundation does not read, store, or send screen content or perform actions. You can disable the service in Android Accessibility settings at any time.</string>
     <string name="open_settings">Open settings</string>
     <string name="not_now">Not now</string>
     <string name="voice_title">Talk with HandsFree</string>
@@ -169,5 +169,9 @@
     <string name="clarification_integration_unavailable">Some clarification actions are unavailable until their integrations are connected.</string>
     <string name="confirmation_integration_unavailable">Some confirmation actions are unavailable until their integrations are connected.</string>
     <string name="diagnostics_inspect_unavailable">App inspection is unavailable until its integration is connected.</string>
+    <string name="screen_service_connected">Accessibility Service is enabled and connected.</string>
+    <string name="screen_service_disconnected">Android lists the service as enabled, but it is not currently connected.</string>
+    <string name="screen_access_service_label">HandsFree AI accessibility status</string>
+    <string name="screen_access_service_description">Reports service connection status only. It does not inspect or control screen content.</string>
 </resources>
 

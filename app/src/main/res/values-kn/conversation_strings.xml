@@ -24,7 +24,7 @@
     <string name="food_help">ಆಹಾರ ಆರ್ಡರ್ ಮಾಡಲು ಸಹಾಯ ಮಾಡಿ</string>
     <string name="food_help_button">ಆಹಾರ ಆರ್ಡರ್ ಮಾಡಲು ಸಹಾಯ ಮಾಡಿ  →</string>
     <string name="screen_title">ನಿಮ್ಮ ಆ್ಯಪ್‌ಗಳಲ್ಲಿ ಸಹಾಯ ಮಾಡಲು ಅನುಮತಿಸಿ</string>
-    <string name="screen_intro">ನೀವು ಪ್ರಾರಂಭಿಸುವ ಕೆಲಸಗಳಲ್ಲಿ ಸಹಾಯ ಮಾಡಲು ಆ್ಯಪ್‌ನ ನಿಯಂತ್ರಣಗಳನ್ನು ಓದುವ ಅನುಮತಿ ನೀಡಿ.</string>
+    <string name="screen_intro">ಪ್ರವೇಶಿಸುವಿಕೆ ಸೇವೆಯ ಸ್ಥಿತಿಯನ್ನು ತೋರಿಸಲು ಅದನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ. ಈ ಮೂಲ ವ್ಯವಸ್ಥೆ ಪರದೆಯ ವಿಷಯವನ್ನು ಓದುವುದಿಲ್ಲ, ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ, ಕಳುಹಿಸುವುದಿಲ್ಲ ಅಥವಾ ಕಾರ್ಯಗಳನ್ನು ಮಾಡುವುದಿಲ್ಲ.</string>
     <string name="screen_setup">ಪರದೆ ಪ್ರವೇಶ ಹೊಂದಿಸಿ</string>
     <string name="reconnect">ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ</string>
     <string name="you">ನೀವು</string>
@@ -44,7 +44,7 @@
     <string name="developer_tools">ಡೆವಲಪರ್ ಪರಿಕರಗಳು</string>
     <string name="done">ಮುಗಿದಿದೆ</string>
     <string name="allow_screen">ಪರದೆ ಪ್ರವೇಶಕ್ಕೆ ಅನುಮತಿಸಿ</string>
-    <string name="screen_disclosure">ನೀವು ಪ್ರಾರಂಭಿಸುವ ಕೆಲಸಗಳಲ್ಲಿ ಸಹಾಯ ಮಾಡಲು HandsFree ಪರದೆಯ ನಿಯಂತ್ರಣಗಳನ್ನು ಓದುತ್ತದೆ. ಪರದೆಯ ಮಾಹಿತಿಯನ್ನು ನಿಮ್ಮ ಸಂಪರ್ಕಿತ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಸಂಸ್ಕರಿಸಲಾಗುತ್ತದೆ. ಯಾವಾಗ ಬೇಕಾದರೂ ಪ್ರವೇಶವನ್ನು ನಿಲ್ಲಿಸಬಹುದು.</string>
+    <string name="screen_disclosure">Android HandsFree AI ಪ್ರವೇಶಿಸುವಿಕೆ ಸೇವೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುತ್ತದೆ. ಈ ಮೂಲ ವ್ಯವಸ್ಥೆ ಪರದೆಯ ವಿಷಯವನ್ನು ಓದುವುದಿಲ್ಲ, ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ, ಕಳುಹಿಸುವುದಿಲ್ಲ ಅಥವಾ ಕಾರ್ಯಗಳನ್ನು ಮಾಡುವುದಿಲ್ಲ. ಯಾವಾಗ ಬೇಕಾದರೂ Android ಪ್ರವೇಶಿಸುವಿಕೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಸೇವೆಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಬಹುದು.</string>
     <string name="open_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ</string>
     <string name="not_now">ಈಗ ಬೇಡ</string>
     <string name="voice_title">HandsFree ಜೊತೆ ಮಾತನಾಡಿ</string>
@@ -169,5 +169,9 @@
     <string name="clarification_integration_unavailable">ಸಂಪರ್ಕ ಅಗತ್ಯವಿರುವ ಕೆಲವು ಸ್ಪಷ್ಟೀಕರಣ ಕಾರ್ಯಗಳು ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ.</string>
     <string name="confirmation_integration_unavailable">ಸಂಪರ್ಕ ಅಗತ್ಯವಿರುವ ಕೆಲವು ದೃಢೀಕರಣ ಕಾರ್ಯಗಳು ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ.</string>
     <string name="diagnostics_inspect_unavailable">ಸಂಪರ್ಕ ಅಗತ್ಯವಿರುವ ಆ್ಯಪ್ ಪರಿಶೀಲನೆ ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ.</string>
+    <string name="screen_service_connected">ಪ್ರವೇಶಿಸುವಿಕೆ ಸೇವೆ ಸಕ್ರಿಯವಾಗಿದೆ ಮತ್ತು ಸಂಪರ್ಕಗೊಂಡಿದೆ.</string>
+    <string name="screen_service_disconnected">Android ಸೇವೆಯನ್ನು ಸಕ್ರಿಯವಾಗಿದೆ ಎಂದು ತೋರಿಸುತ್ತದೆ, ಆದರೆ ಅದು ಈಗ ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ.</string>
+    <string name="screen_access_service_label">HandsFree AI ಪ್ರವೇಶಿಸುವಿಕೆ ಸ್ಥಿತಿ</string>
+    <string name="screen_access_service_description">ಸೇವೆಯ ಸಂಪರ್ಕ ಸ್ಥಿತಿಯನ್ನು ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ. ಪರದೆಯ ವಿಷಯವನ್ನು ಪರಿಶೀಲಿಸುವುದಿಲ್ಲ ಅಥವಾ ನಿಯಂತ್ರಿಸುವುದಿಲ್ಲ.</string>
 </resources>
 

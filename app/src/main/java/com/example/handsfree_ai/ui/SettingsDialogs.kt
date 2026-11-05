@@ -31,7 +31,8 @@ fun SettingsDialog(
     isTaskRunning: Boolean = false,
     isModelSetupEnabled: Boolean = true,
     showDebugTools: Boolean = BuildConfig.DEBUG,
-    onOpenDiagnostics: (() -> Unit)? = null
+    onOpenDiagnostics: (() -> Unit)? = null,
+    screenAccessServiceConnected: Boolean = false
 ) {
     val context = LocalContext.current
     AlertDialog(
@@ -68,8 +69,11 @@ fun SettingsDialog(
                     Text(context.uiText(R.string.language_locked), style = MaterialTheme.typography.bodySmall)
                 }
                 Text(
-                    if (screenAccessEnabled) context.uiText(R.string.screen_on)
-                    else context.uiText(R.string.screen_needed)
+                    when {
+                        !screenAccessEnabled -> context.uiText(R.string.screen_needed)
+                        screenAccessServiceConnected -> context.uiText(R.string.screen_on)
+                        else -> context.uiText(R.string.screen_service_disconnected)
+                    }
                 )
                 TextButton(onClick = onOpenScreenSettings) {
                     Text(context.uiText(R.string.screen_settings))
