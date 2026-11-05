@@ -44,11 +44,11 @@
     <string name="developer_tools">Developer tools</string>
     <string name="done">Done</string>
     <string name="allow_screen">Allow screen access</string>
-    <string name="screen_disclosure">HandsFree reads app controls and performs actions only for tasks you start. Screen information is processed on your connected computer. Protected authentication fields are excluded. You can stop at any time.</string>
+    <string name="screen_disclosure">HandsFree reads visible controls to assist with tasks you start. Screen information is processed on your connected computer. You can stop access at any time.</string>
     <string name="open_settings">Open settings</string>
     <string name="not_now">Not now</string>
     <string name="voice_title">Talk with HandsFree</string>
-    <string name="voice_disclosure">After Start conversation, the microphone stays available across apps and between tasks until you stop. Speech is sent to our speech service; silence is discarded on the phone. I\'ll read approvals aloud so you can answer by voice. Listening pauses while I speak. Stop ends microphone access. Payment remains yours to complete manually.</string>
+    <string name="voice_disclosure">The microphone remains available while conversation mode is on. Speech is sent to our speech service. Listening pauses during spoken replies. Stop ends microphone access. Payments must be completed manually.</string>
     <string name="enable_voice">Enable voice</string>
     <string name="use_typing">Use typing</string>
     <string name="choose_app">Choose an app</string>
