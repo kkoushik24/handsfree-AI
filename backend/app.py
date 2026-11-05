@@ -1,52 +1,61 @@
-"""HandsFree AI backend. Run: uvicorn app:app --host 0.0.0.0 --port 8000 --reload"""
-from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from voice import VoiceError, transcribe
+"""FastAPI application server for handsfree AI automation."""
+import os
+from fastapi import FastAPI, File, HTTPException, UploadFile, Response
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
-import model_schema
-from contracts import Health, PlanRequest, PlanResponse
+load_dotenv()
 
-app = FastAPI(title="HandsFree AI Backend", version="0.1.0")
+from contracts import PlanRequest, PlanResponse
+from model_schema import ollama_status, plan
+from voice import text_to_speech, transcribe_audio
+
+app = FastAPI(title="Handsfree AI Backend", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-@app.exception_handler(RequestValidationError)
-async def validation_error_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(status_code=422, content={"error": "invalid_request", "details": exc.errors()})
-
-
-@app.exception_handler(Exception)
-async def unhandled_error_handler(request: Request, exc: Exception):
-    return JSONResponse(status_code=500, content={"error": "internal_error", "details": str(exc)})
-
-
-@app.get("/health", response_model=Health)
-async def health():
-    reachable, ready = await model_schema.ollama_status()
-    return Health(
-        status="ok" if reachable and ready else "degraded",
-        model=model_schema.MODEL,
-        ollama_reachable=reachable,
-        model_ready=ready,
-    )
+@app.get("/health")
+async def health_check():
+    """Verify backend health and Ollama connectivity status."""
+    reachable, ready = await ollama_status()
+    model_name = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+    return {
+        "status": "ok",
+        "model": model_name,
+        "ollama_reachable": reachable,
+        "model_ready": ready,
+    }
 
 
 @app.post("/plan", response_model=PlanResponse)
-async def plan(req: PlanRequest, mock: bool = False):
-    if mock:
-        return model_schema.mock_plan(req)
-    return await model_schema.plan(req)
+async def generate_plan(req: PlanRequest):
+    """Generate task execution plan steps based on user goal and screen context."""
+    return await plan(req)
 
-@app.post("/voice/transcribe")
-async def transcribe_endpoint(file: UploadFile = File(...)):
+
+@app.post("/speak")
+async def speak(text: str):
+    """Convert input text to speech audio stream."""
+    try:
+        audio_bytes = await text_to_speech(text)
+        return Response(content=audio_bytes, media_type="audio/mpeg")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/transcribe")
+async def transcribe(file: UploadFile = File(...)):
+    """Transcribe uploaded audio file to text."""
     try:
         audio_bytes = await file.read()
-        text = await transcribe(
-            audio=audio_bytes,
-            filename=file.filename or "audio.wav",
-            content_type=file.content_type or "audio/wav",
-        )
+        text = await transcribe_audio(audio_bytes)
         return {"text": text}
-    except VoiceError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
