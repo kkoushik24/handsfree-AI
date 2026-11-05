@@ -1,4 +1,4 @@
-"""Core data contracts and Pydantic models for the FastAPI endpoints."""
+"""Core data contracts and Pydantic models for HandsFree AI."""
 from enum import Enum
 from typing import Literal, Optional
 
@@ -22,7 +22,7 @@ class UIElement(BaseModel):
     bounds: Optional[list[int]] = None
     clickable: bool = True
     editable: bool = False
-    sensitive: bool = False  # password / OTP / payment field, set by Android
+    sensitive: bool = False
 
 
 class PlanRequest(BaseModel):
@@ -32,11 +32,12 @@ class PlanRequest(BaseModel):
     elements: list[UIElement] = Field(default_factory=list)
     screen_hash: Optional[str] = ""
     history: list[str] = Field(default_factory=list)
-    step: int = 0
+    step: int = Field(default=0, ge=0)
 
 
 class Action(BaseModel):
-    type: str  # tap | type | scroll | back | open_app | ask_user | done
+    # Wire-format alias: type_text is serialized as "type".
+    type: str
     target_id: Optional[str] = None
     text: Optional[str] = None
     reason: Optional[str] = None
@@ -54,9 +55,12 @@ class Step(BaseModel):
 class PlanResponse(BaseModel):
     task_id: str
     step: int
-    screen_hash: str  # echoed back so Android can detect stale actions
-    action: Optional[Action] = None  # the NEXT action to execute (first step)
-    steps: list[Step] = Field(default_factory=list)  # full plan preview
+    # Echoes the observation hash supplied in this request. Android must
+    # compare it with its latest observation before executing the action.
+    screen_hash: str
+    # Only this field is executable. "steps" is informational preview only.
+    action: Optional[Action] = None
+    steps: list[Step] = Field(default_factory=list)
     error: Optional[str] = None
 
 
