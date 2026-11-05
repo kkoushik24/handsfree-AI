@@ -23,3 +23,8 @@ local.properties
 .idea/
 **/build/
 >>>>>>> 99cf1b3deff1fe91665537f0981e097200812a74
+
+.env
+backend/.env
+*.mp3
+
