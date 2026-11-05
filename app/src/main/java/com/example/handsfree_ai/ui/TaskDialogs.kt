@@ -24,26 +24,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.handsfree_ai.BuildConfig
 import com.example.handsfree_ai.R
+import com.example.handsfree_ai.accessibility.AccessibilityElementMapper
 
 /** An app choice supplied by the host screen; this UI does not discover installed apps. */
 data class ClarificationAppChoice(val id: String, val name: String)
-
-/** Screen details supplied by the host for developer diagnostics. */
-data class DiagnosticScreenElement(
-    val id: String,
-    val text: String = "",
-    val description: String = "",
-    val actions: List<String> = emptyList()
-)
-
-data class DiagnosticScreenObservation(
-    val packageName: String = "",
-    val observationId: String = "",
-    val blockedReason: String? = null,
-    val elements: List<DiagnosticScreenElement> = emptyList()
-)
-
-data class DiagnosticActionRecord(val action: String, val result: String)
 
 @Composable
 fun ClarificationDialog(
@@ -151,13 +135,15 @@ fun DeveloperToolsDialog(
     connectionStatus: String,
     lastProposedAction: String,
     actionHistory: List<DiagnosticActionRecord>,
-    observation: DiagnosticScreenObservation?,
+    observation: SanitizedDiagnosticObservation?,
     onInspectApp: ((String) -> Unit)?,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (!BuildConfig.DEBUG) return
     val context = LocalContext.current
+    val safeObservation = remember(observation) { observation?.value }
+    val safeActionHistory = immutableDiagnosticList(actionHistory)
     var appQuery by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -171,20 +157,32 @@ fun DeveloperToolsDialog(
                 Text(context.uiText(R.string.diagnostics_connection, connectionStatus.ifBlank { context.uiText(R.string.diagnostics_unavailable) }))
                 Text(context.uiText(R.string.diagnostics_last_action, lastProposedAction.ifBlank { context.uiText(R.string.diagnostics_none) }))
                 Text(context.uiText(R.string.diagnostics_history))
-                if (actionHistory.isEmpty()) Text(context.uiText(R.string.diagnostics_empty))
-                actionHistory.forEach { item ->
+                if (safeActionHistory.isEmpty()) Text(context.uiText(R.string.diagnostics_empty))
+                safeActionHistory.forEach { item ->
                     Text(context.uiText(R.string.diagnostics_history_item, item.action, item.result), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
                 }
                 Text(context.uiText(R.string.diagnostics_observation))
-                if (observation == null) {
+                if (safeObservation == null) {
                     Text(context.uiText(R.string.diagnostics_empty))
                 } else {
-                    Text(context.uiText(R.string.diagnostics_package, observation.packageName.ifBlank { context.uiText(R.string.diagnostics_unavailable) }))
-                    Text(context.uiText(R.string.diagnostics_observation_id, observation.observationId.ifBlank { context.uiText(R.string.diagnostics_unavailable) }))
-                    Text(context.uiText(R.string.diagnostics_blocked_reason, observation.blockedReason?.takeIf(String::isNotBlank) ?: context.uiText(R.string.diagnostics_none)))
-                    if (observation.elements.isEmpty()) Text(context.uiText(R.string.diagnostics_no_elements))
-                    observation.elements.forEach { element ->
-                        Text(context.uiText(R.string.diagnostics_element, element.id, element.text.ifBlank { context.uiText(R.string.diagnostics_none) }, element.description.ifBlank { context.uiText(R.string.diagnostics_none) }, element.actions.joinToString().ifBlank { context.uiText(R.string.diagnostics_none) }), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                    Text(context.uiText(R.string.diagnostics_package, safeObservation.packageName.ifBlank { context.uiText(R.string.diagnostics_unavailable) }))
+                    Text(context.uiText(R.string.diagnostics_observation_id, safeObservation.observationId.ifBlank { context.uiText(R.string.diagnostics_unavailable) }))
+                    Text(context.uiText(R.string.diagnostics_screen_hash, safeObservation.screenHash.ifBlank { context.uiText(R.string.diagnostics_unavailable) }))
+                    Text(context.uiText(R.string.diagnostics_blocked_reason, safeObservation.blockedReason?.takeIf(String::isNotBlank) ?: context.uiText(R.string.diagnostics_none)))
+                    Text(context.uiText(if (safeObservation.truncated) R.string.diagnostics_observation_truncated else R.string.diagnostics_observation_complete))
+                    if (safeObservation.elements.isEmpty()) Text(context.uiText(R.string.diagnostics_no_elements))
+                    safeObservation.elements.forEach { element ->
+                        Text(context.uiText(
+                            R.string.diagnostics_element,
+                            element.id,
+                            element.text.ifBlank { context.uiText(R.string.diagnostics_none) },
+                            element.description.ifBlank { context.uiText(R.string.diagnostics_none) },
+                            element.bounds.joinToString(", ").ifBlank { context.uiText(R.string.diagnostics_none) },
+                            context.uiText(if (element.clickable) R.string.diagnostics_yes else R.string.diagnostics_no),
+                            context.uiText(if (element.editable) R.string.diagnostics_yes else R.string.diagnostics_no),
+                            context.uiText(if (element.sensitive) R.string.diagnostics_yes else R.string.diagnostics_no),
+                            element.actions.joinToString().ifBlank { context.uiText(R.string.diagnostics_none) }
+                        ), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
                     }
                 }
                 OutlinedTextField(

@@ -24,7 +24,7 @@
     <string name="food_help">Help me order food</string>
     <string name="food_help_button">Help me order food  →</string>
     <string name="screen_title">Let me help in your apps</string>
-    <string name="screen_intro">Enable the Accessibility Service to show its status. This foundation does not read, store, or send screen content or perform actions.</string>
+    <string name="screen_intro">Enable the Accessibility Service to observe visible interface structure. Sensitive fields are redacted; screen information stays on this device. HandsFree AI does not perform actions.</string>
     <string name="screen_setup">Set up screen access</string>
     <string name="reconnect">Try connecting again</string>
     <string name="you">You</string>
@@ -44,7 +44,7 @@
     <string name="developer_tools">Developer tools</string>
     <string name="done">Done</string>
     <string name="allow_screen">Allow screen access</string>
-    <string name="screen_disclosure">Android will enable the HandsFree AI Accessibility Service. This foundation does not read, store, or send screen content or perform actions. You can disable the service in Android Accessibility settings at any time.</string>
+    <string name="screen_disclosure">Android will enable the HandsFree AI Accessibility Service to observe visible interface structure. Password and other recognized sensitive fields are redacted. Observations stay on this device and are not sent. HandsFree AI does not perform screen actions. You can disable the service in Android Accessibility settings at any time.</string>
     <string name="open_settings">Open settings</string>
     <string name="not_now">Not now</string>
     <string name="voice_title">Talk with HandsFree</string>
@@ -142,7 +142,14 @@
     <string name="diagnostics_package">Package: %1$s</string>
     <string name="diagnostics_observation_id">Observation ID: %1$s</string>
     <string name="diagnostics_blocked_reason">Blocked reason: %1$s</string>
-    <string name="diagnostics_element">ID: %1$s\nText: %2$s\nDescription: %3$s\nActions: %4$s</string>
+    <string name="diagnostics_element">ID: %1$s\nText: %2$s\nDescription: %3$s\nBounds: %4$s\nClickable: %5$s\nEditable: %6$s\nSensitive: %7$s\nActions: %8$s</string>
+    <string name="diagnostics_screen_hash">Screen hash: %1$s</string>
+    <string name="diagnostics_yes">Yes</string>
+    <string name="diagnostics_no">No</string>
+    <string name="diagnostics_window_unavailable">The active window is unavailable.</string>
+    <string name="diagnostics_observation_failed">The screen observation could not be completed.</string>
+    <string name="diagnostics_observation_complete">Observation complete.</string>
+    <string name="diagnostics_observation_truncated">Observation may be incomplete because an element or traversal limit was reached.</string>
     <string name="diagnostics_inspect_label">App name or package to inspect</string>
     <string name="diagnostics_inspect">Inspect app</string>
     <string name="diagnostics_empty">No diagnostic data available.</string>
@@ -172,6 +179,6 @@
     <string name="screen_service_connected">Accessibility Service is enabled and connected.</string>
     <string name="screen_service_disconnected">Android lists the service as enabled, but it is not currently connected.</string>
     <string name="screen_access_service_label">HandsFree AI accessibility status</string>
-    <string name="screen_access_service_description">Reports service connection status only. It does not inspect or control screen content.</string>
+    <string name="screen_access_service_description">Observes visible interface structure for diagnostics. Sensitive fields are redacted. HandsFree AI does not control the screen.</string>
 </resources>
 

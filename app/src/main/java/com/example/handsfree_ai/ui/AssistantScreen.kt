@@ -54,6 +54,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.handsfree_ai.accessibility.AccessibilityServiceConnectionState
+import com.example.handsfree_ai.accessibility.LiveServiceObservationSnapshot
+import com.example.handsfree_ai.accessibility.ScreenObservationStatus
 import com.example.handsfree_ai.accessibility.isHandsFreeAccessibilityEnabled
 import com.example.handsfree_ai.BuildConfig
 import com.example.handsfree_ai.R
@@ -440,11 +442,25 @@ fun AssistantScreen(
         )
     }
 
+    val liveSnapshot = LiveServiceObservationSnapshot.current()
+    val safeShownObservation = liveSnapshot?.let { snapshot ->
+        val observed = snapshot.observation
+        val blockedReason = when (observed.status) {
+            ScreenObservationStatus.WINDOW_UNAVAILABLE -> context.uiText(R.string.diagnostics_window_unavailable)
+            ScreenObservationStatus.FAILED -> context.uiText(R.string.diagnostics_observation_failed)
+            else -> null
+        }
+        SanitizedDiagnosticObservation.fromLiveService(
+            snapshot = snapshot,
+            blockedReason = blockedReason
+        )
+    } ?: sanitizeDiagnosticObservation(diagnostics.observation)
+
     if (diagnosticsVisible && BuildConfig.DEBUG) DeveloperToolsDialog(
         connectionStatus = diagnostics.connectionStatus.ifBlank { context.uiText(R.string.assistant_not_connected) },
         lastProposedAction = diagnostics.lastProposedAction,
         actionHistory = diagnostics.actionHistory,
-        observation = diagnostics.observation,
+        observation = safeShownObservation,
         onInspectApp = onInspectApp,
         onDismiss = { diagnosticsVisible = false }
     )

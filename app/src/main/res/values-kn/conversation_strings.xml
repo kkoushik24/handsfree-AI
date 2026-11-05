@@ -24,7 +24,7 @@
     <string name="food_help">ಆಹಾರ ಆರ್ಡರ್ ಮಾಡಲು ಸಹಾಯ ಮಾಡಿ</string>
     <string name="food_help_button">ಆಹಾರ ಆರ್ಡರ್ ಮಾಡಲು ಸಹಾಯ ಮಾಡಿ  →</string>
     <string name="screen_title">ನಿಮ್ಮ ಆ್ಯಪ್‌ಗಳಲ್ಲಿ ಸಹಾಯ ಮಾಡಲು ಅನುಮತಿಸಿ</string>
-    <string name="screen_intro">ಪ್ರವೇಶಿಸುವಿಕೆ ಸೇವೆಯ ಸ್ಥಿತಿಯನ್ನು ತೋರಿಸಲು ಅದನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ. ಈ ಮೂಲ ವ್ಯವಸ್ಥೆ ಪರದೆಯ ವಿಷಯವನ್ನು ಓದುವುದಿಲ್ಲ, ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ, ಕಳುಹಿಸುವುದಿಲ್ಲ ಅಥವಾ ಕಾರ್ಯಗಳನ್ನು ಮಾಡುವುದಿಲ್ಲ.</string>
+    <string name="screen_intro">ಕಾಣುವ ಇಂಟರ್‌ಫೇಸ್ ರಚನೆಯನ್ನು ವೀಕ್ಷಿಸಲು ಪ್ರವೇಶಿಸುವಿಕೆ ಸೇವೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ. ಸೂಕ್ಷ್ಮ ಕ್ಷೇತ್ರಗಳನ್ನು ಮರೆಮಾಡಲಾಗುತ್ತದೆ; ಪರದೆ ಮಾಹಿತಿ ಈ ಸಾಧನದಲ್ಲೇ ಉಳಿಯುತ್ತದೆ. HandsFree AI ಕಾರ್ಯಗಳನ್ನು ಮಾಡುವುದಿಲ್ಲ.</string>
     <string name="screen_setup">ಪರದೆ ಪ್ರವೇಶ ಹೊಂದಿಸಿ</string>
     <string name="reconnect">ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ</string>
     <string name="you">ನೀವು</string>
@@ -44,7 +44,7 @@
     <string name="developer_tools">ಡೆವಲಪರ್ ಪರಿಕರಗಳು</string>
     <string name="done">ಮುಗಿದಿದೆ</string>
     <string name="allow_screen">ಪರದೆ ಪ್ರವೇಶಕ್ಕೆ ಅನುಮತಿಸಿ</string>
-    <string name="screen_disclosure">Android HandsFree AI ಪ್ರವೇಶಿಸುವಿಕೆ ಸೇವೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುತ್ತದೆ. ಈ ಮೂಲ ವ್ಯವಸ್ಥೆ ಪರದೆಯ ವಿಷಯವನ್ನು ಓದುವುದಿಲ್ಲ, ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ, ಕಳುಹಿಸುವುದಿಲ್ಲ ಅಥವಾ ಕಾರ್ಯಗಳನ್ನು ಮಾಡುವುದಿಲ್ಲ. ಯಾವಾಗ ಬೇಕಾದರೂ Android ಪ್ರವೇಶಿಸುವಿಕೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಸೇವೆಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಬಹುದು.</string>
+    <string name="screen_disclosure">ಕಾಣುವ ಇಂಟರ್‌ಫೇಸ್ ರಚನೆಯನ್ನು ವೀಕ್ಷಿಸಲು Android HandsFree AI ಪ್ರವೇಶಿಸುವಿಕೆ ಸೇವೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುತ್ತದೆ. ಪಾಸ್‌ವರ್ಡ್ ಮತ್ತು ಗುರುತಿಸಲಾದ ಇತರ ಸೂಕ್ಷ್ಮ ಕ್ಷೇತ್ರಗಳನ್ನು ಮರೆಮಾಡಲಾಗುತ್ತದೆ. ವೀಕ್ಷಣೆಗಳು ಈ ಸಾಧನದಲ್ಲೇ ಉಳಿಯುತ್ತವೆ; ಕಳುಹಿಸಲಾಗುವುದಿಲ್ಲ. HandsFree AI ಪರದೆಯಲ್ಲಿ ಕಾರ್ಯಗಳನ್ನು ಮಾಡುವುದಿಲ್ಲ. ಯಾವಾಗ ಬೇಕಾದರೂ Android ಪ್ರವೇಶಿಸುವಿಕೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಸೇವೆಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಬಹುದು.</string>
     <string name="open_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ</string>
     <string name="not_now">ಈಗ ಬೇಡ</string>
     <string name="voice_title">HandsFree ಜೊತೆ ಮಾತನಾಡಿ</string>
@@ -142,7 +142,14 @@
     <string name="diagnostics_package">ಪ್ಯಾಕೇಜ್: %1$s</string>
     <string name="diagnostics_observation_id">ವೀಕ್ಷಣೆ ID: %1$s</string>
     <string name="diagnostics_blocked_reason">ತಡೆದ ಕಾರಣ: %1$s</string>
-    <string name="diagnostics_element">ID: %1$s\nಪಠ್ಯ: %2$s\nವಿವರಣೆ: %3$s\nಕಾರ್ಯಗಳು: %4$s</string>
+    <string name="diagnostics_element">ID: %1$s\nಪಠ್ಯ: %2$s\nವಿವರಣೆ: %3$s\nಗಡಿಗಳು: %4$s\nಕ್ಲಿಕ್ ಮಾಡಬಹುದೇ: %5$s\nಸಂಪಾದಿಸಬಹುದೇ: %6$s\nಸೂಕ್ಷ್ಮವೇ: %7$s\nಕಾರ್ಯಗಳು: %8$s</string>
+    <string name="diagnostics_screen_hash">ಪರದೆ ಹ್ಯಾಶ್: %1$s</string>
+    <string name="diagnostics_yes">ಹೌದು</string>
+    <string name="diagnostics_no">ಇಲ್ಲ</string>
+    <string name="diagnostics_window_unavailable">ಸಕ್ರಿಯ ವಿಂಡೋ ಲಭ್ಯವಿಲ್ಲ.</string>
+    <string name="diagnostics_observation_failed">ಪರದೆ ವೀಕ್ಷಣೆ ಪೂರ್ಣಗೊಳಿಸಲಾಗಲಿಲ್ಲ.</string>
+    <string name="diagnostics_observation_complete">ವೀಕ್ಷಣೆ ಪೂರ್ಣಗೊಂಡಿದೆ.</string>
+    <string name="diagnostics_observation_truncated">ಅಂಶ ಅಥವಾ ಪರಿಶೀಲನೆ ಮಿತಿ ತಲುಪಿದ ಕಾರಣ ವೀಕ್ಷಣೆ ಅಪೂರ್ಣವಾಗಿರಬಹುದು.</string>
     <string name="diagnostics_inspect_label">ಪರಿಶೀಲಿಸಬೇಕಾದ ಆ್ಯಪ್ ಹೆಸರು ಅಥವಾ ಪ್ಯಾಕೇಜ್</string>
     <string name="diagnostics_inspect">ಆ್ಯಪ್ ಪರಿಶೀಲಿಸಿ</string>
     <string name="diagnostics_empty">ಪತ್ತೆ ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ.</string>
@@ -172,6 +179,6 @@
     <string name="screen_service_connected">ಪ್ರವೇಶಿಸುವಿಕೆ ಸೇವೆ ಸಕ್ರಿಯವಾಗಿದೆ ಮತ್ತು ಸಂಪರ್ಕಗೊಂಡಿದೆ.</string>
     <string name="screen_service_disconnected">Android ಸೇವೆಯನ್ನು ಸಕ್ರಿಯವಾಗಿದೆ ಎಂದು ತೋರಿಸುತ್ತದೆ, ಆದರೆ ಅದು ಈಗ ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ.</string>
     <string name="screen_access_service_label">HandsFree AI ಪ್ರವೇಶಿಸುವಿಕೆ ಸ್ಥಿತಿ</string>
-    <string name="screen_access_service_description">ಸೇವೆಯ ಸಂಪರ್ಕ ಸ್ಥಿತಿಯನ್ನು ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ. ಪರದೆಯ ವಿಷಯವನ್ನು ಪರಿಶೀಲಿಸುವುದಿಲ್ಲ ಅಥವಾ ನಿಯಂತ್ರಿಸುವುದಿಲ್ಲ.</string>
+    <string name="screen_access_service_description">ಪತ್ತೆಗಾಗಿ ಕಾಣುವ ಇಂಟರ್‌ಫೇಸ್ ರಚನೆಯನ್ನು ವೀಕ್ಷಿಸುತ್ತದೆ. ಸೂಕ್ಷ್ಮ ಕ್ಷೇತ್ರಗಳನ್ನು ಮರೆಮಾಡುತ್ತದೆ. HandsFree AI ಪರದೆಯನ್ನು ನಿಯಂತ್ರಿಸುವುದಿಲ್ಲ.</string>
 </resources>
 
