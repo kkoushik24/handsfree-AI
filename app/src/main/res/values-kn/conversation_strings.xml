@@ -149,5 +149,25 @@
     <string name="diagnostics_unavailable">ಲಭ್ಯವಿಲ್ಲ</string>
     <string name="diagnostics_none">ಯಾವುದೂ ಇಲ್ಲ</string>
     <string name="diagnostics_no_elements">ವೀಕ್ಷಿಸಿದ ಅಂಶಗಳಿಲ್ಲ.</string>
+    <string name="language_english">ಇಂಗ್ಲಿಷ್</string>
+    <string name="language_kannada">ಕನ್ನಡ</string>
+    <string name="assistant_name">HandsFree</string>
+    <string name="assistant_connected">ಸಂಪರ್ಕಗೊಂಡಿದೆ</string>
+    <string name="assistant_not_connected">ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ</string>
+    <string name="assistant_working">ಕೆಲಸ ನಡೆಯುತ್ತಿದೆ</string>
+    <string name="assistant_help_title">ಒಂದೊಂದೇ ಹಂತವಾಗಿ ಸಹಾಯ</string>
+    <string name="assistant_help_body">ಇಲ್ಲಿ ನೀವು ಮಾಡಬೇಕಾದ ಕೆಲಸವನ್ನು ವಿವರಿಸಬಹುದು. ಸಹಾಯಕ ಸೇವೆ ಸಂಪರ್ಕಗೊಂಡಾಗ ಕೆಲಸ ನಿರ್ವಹಣೆ ಲಭ್ಯವಾಗುತ್ತದೆ.</string>
+    <string name="assistant_not_connected_hint">ಸಹಾಯಕ ಸೇವೆ ಸಂಪರ್ಕಗೊಳ್ಳುವವರೆಗೆ ಕೆಲಸ ಕಳುಹಿಸುವುದು ಮತ್ತು ಧ್ವನಿ ಮಾತುಕತೆ ಲಭ್ಯವಿರುವುದಿಲ್ಲ.</string>
+    <string name="assistant_voice_not_connected">ಧ್ವನಿ ಮಾತುಕತೆ ಇನ್ನೂ ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ. ನೀವು ಬರೆಯುವ ಮೂಲಕ ಕೆಲಸವನ್ನು ಸಿದ್ಧಪಡಿಸಬಹುದು.</string>
+    <string name="assistant_settings_unavailable">Android ಪರದೆ ಪ್ರವೇಶ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆಯಲಾಗಲಿಲ್ಲ.</string>
+    <string name="assistant_inspect_not_connected">ಪತ್ತೆ ಕಾರ್ಯ ಸಂಪರ್ಕಗೊಳ್ಳುವವರೆಗೆ ಆ್ಯಪ್ ಪರಿಶೀಲನೆ ಲಭ್ಯವಿರುವುದಿಲ್ಲ.</string>
+    <string name="assistant_model_not_connected">ಈ ಬಿಲ್ಡ್‌ನಲ್ಲಿ ಮಾದರಿ ಹೊಂದಿಸುವ ಕಾರ್ಯಗಳು ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ.</string>
+    <string name="assistant_result_title">ಕೆಲಸದ ಫಲಿತಾಂಶ</string>
+    <string name="assistant_error_title">ಕೆಲಸದ ಸಮಸ್ಯೆ</string>
+    <string name="assistant_action_not_connected">ಈ ಕಾರ್ಯ ಇನ್ನೂ ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ.</string>
+    <string name="assistant_loading">ಸಹಾಯಕನೊಂದಿಗೆ ಸಂಪರ್ಕಿಸಲಾಗುತ್ತಿದೆ…</string>
+    <string name="clarification_integration_unavailable">ಸಂಪರ್ಕ ಅಗತ್ಯವಿರುವ ಕೆಲವು ಸ್ಪಷ್ಟೀಕರಣ ಕಾರ್ಯಗಳು ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ.</string>
+    <string name="confirmation_integration_unavailable">ಸಂಪರ್ಕ ಅಗತ್ಯವಿರುವ ಕೆಲವು ದೃಢೀಕರಣ ಕಾರ್ಯಗಳು ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ.</string>
+    <string name="diagnostics_inspect_unavailable">ಸಂಪರ್ಕ ಅಗತ್ಯವಿರುವ ಆ್ಯಪ್ ಪರಿಶೀಲನೆ ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ.</string>
 </resources>
 

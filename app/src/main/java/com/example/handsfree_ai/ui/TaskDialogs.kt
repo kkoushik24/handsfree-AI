@@ -49,16 +49,16 @@ data class DiagnosticActionRecord(val action: String, val result: String)
 fun ClarificationDialog(
     question: String,
     appChoices: List<ClarificationAppChoice> = emptyList(),
-    onContinue: (String) -> Unit,
-    onAppSelected: (ClarificationAppChoice) -> Unit,
-    onListenAgain: () -> Unit,
-    onStop: () -> Unit,
+    onContinue: ((String) -> Unit)?,
+    onAppSelected: ((ClarificationAppChoice) -> Unit)?,
+    onListenAgain: (() -> Unit)?,
+    onStop: (() -> Unit)?,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var answer by remember(question) { mutableStateOf("") }
-    var selectedApp by remember(question) { mutableStateOf<ClarificationAppChoice?>(null) }
+    var answer by remember(question, appChoices) { mutableStateOf("") }
+    var selectedApp by remember(question, appChoices) { mutableStateOf<ClarificationAppChoice?>(null) }
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = modifier,
@@ -71,7 +71,7 @@ fun ClarificationDialog(
                         onClick = {
                             selectedApp = app
                             answer = app.name
-                            onAppSelected(app)
+                            onAppSelected?.invoke(app)
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(if (selectedApp?.id == app.id) "✓ ${app.name}" else app.name) }
@@ -82,24 +82,33 @@ fun ClarificationDialog(
                     label = { Text(context.uiText(R.string.your_reply)) },
                     modifier = Modifier.fillMaxWidth()
                 )
-                TextButton(onClick = onListenAgain) { Text(context.uiText(R.string.listen_again)) }
+                TextButton(enabled = onListenAgain != null, onClick = { onListenAgain?.invoke() }) {
+                    Text(context.uiText(R.string.listen_again))
+                }
+                if (onContinue == null || onListenAgain == null || onStop == null) {
+                    Text(context.uiText(R.string.clarification_integration_unavailable),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         },
         confirmButton = {
-            TextButton(enabled = answer.isNotBlank(), onClick = { onContinue(answer.trim()) }) {
+            TextButton(enabled = answer.isNotBlank() && onContinue != null, onClick = { onContinue?.invoke(answer.trim()) }) {
                 Text(context.uiText(R.string.continue_button))
             }
         },
-        dismissButton = { TextButton(onClick = onStop) { Text(context.uiText(R.string.stop)) } }
+        dismissButton = {
+            TextButton(enabled = onStop != null, onClick = { onStop?.invoke() }) { Text(context.uiText(R.string.stop)) }
+        }
     )
 }
 
 @Composable
 fun ConfirmationDialog(
     message: String,
-    onApprove: () -> Unit,
-    onDecline: () -> Unit,
-    onStop: () -> Unit,
+    onApprove: (() -> Unit)?,
+    onDecline: (() -> Unit)?,
+    onStop: (() -> Unit)?,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -108,14 +117,29 @@ fun ConfirmationDialog(
         onDismissRequest = onDismiss,
         modifier = modifier,
         title = { Text(context.uiText(R.string.confirmation_title)) },
-        text = { Text(message) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(message)
+                if (onApprove == null || onDecline == null || onStop == null) {
+                    Text(context.uiText(R.string.confirmation_integration_unavailable),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        },
         confirmButton = {
-            Button(onClick = onApprove) { Text(context.uiText(R.string.approve)) }
+            Button(enabled = onApprove != null, onClick = { onApprove?.invoke() }) {
+                Text(context.uiText(R.string.approve))
+            }
         },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = onDecline) { Text(context.uiText(R.string.decline)) }
-                TextButton(onClick = onStop) { Text(context.uiText(R.string.stop)) }
+                TextButton(enabled = onDecline != null, onClick = { onDecline?.invoke() }) {
+                    Text(context.uiText(R.string.decline))
+                }
+                TextButton(enabled = onStop != null, onClick = { onStop?.invoke() }) {
+                    Text(context.uiText(R.string.stop))
+                }
             }
         }
     )
@@ -128,7 +152,7 @@ fun DeveloperToolsDialog(
     lastProposedAction: String,
     actionHistory: List<DiagnosticActionRecord>,
     observation: DiagnosticScreenObservation?,
-    onInspectApp: (String) -> Unit,
+    onInspectApp: ((String) -> Unit)?,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -169,8 +193,16 @@ fun DeveloperToolsDialog(
                     label = { Text(context.uiText(R.string.diagnostics_inspect_label)) },
                     modifier = Modifier.fillMaxWidth()
                 )
-                TextButton(enabled = appQuery.isNotBlank(), onClick = { onInspectApp(appQuery.trim()) }) {
+                TextButton(
+                    enabled = appQuery.isNotBlank() && onInspectApp != null,
+                    onClick = { onInspectApp?.invoke(appQuery.trim()) }
+                ) {
                     Text(context.uiText(R.string.diagnostics_inspect))
+                }
+                if (onInspectApp == null) {
+                    Text(context.uiText(R.string.diagnostics_inspect_unavailable),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         },

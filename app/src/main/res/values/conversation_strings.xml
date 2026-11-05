@@ -149,5 +149,25 @@
     <string name="diagnostics_unavailable">Unavailable</string>
     <string name="diagnostics_none">None</string>
     <string name="diagnostics_no_elements">No observed elements.</string>
+    <string name="language_english">English</string>
+    <string name="language_kannada">Kannada</string>
+    <string name="assistant_name">HandsFree</string>
+    <string name="assistant_connected">Connected</string>
+    <string name="assistant_not_connected">Not connected</string>
+    <string name="assistant_working">Working on it</string>
+    <string name="assistant_help_title">A little help, one step at a time</string>
+    <string name="assistant_help_body">You can describe a task here. Task execution becomes available when the assistant service is connected.</string>
+    <string name="assistant_not_connected_hint">Task submission and voice conversation are unavailable until the assistant service is connected.</string>
+    <string name="assistant_voice_not_connected">Voice conversation is not connected yet. You can still prepare a task by typing.</string>
+    <string name="assistant_settings_unavailable">Android screen access settings could not be opened.</string>
+    <string name="assistant_inspect_not_connected">App inspection is unavailable until diagnostics are connected.</string>
+    <string name="assistant_model_not_connected">Model setup actions are not connected in this build.</string>
+    <string name="assistant_result_title">Task result</string>
+    <string name="assistant_error_title">Task issue</string>
+    <string name="assistant_action_not_connected">This action is not connected yet.</string>
+    <string name="assistant_loading">Connecting to the assistant…</string>
+    <string name="clarification_integration_unavailable">Some clarification actions are unavailable until their integrations are connected.</string>
+    <string name="confirmation_integration_unavailable">Some confirmation actions are unavailable until their integrations are connected.</string>
+    <string name="diagnostics_inspect_unavailable">App inspection is unavailable until its integration is connected.</string>
 </resources>
 
