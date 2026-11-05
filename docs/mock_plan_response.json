@@ -1,0 +1,29 @@
+{
+  "task_id": "task-offline-01",
+  "step": 0,
+  "screen_hash": "offline-screen",
+  "action": {
+    "type": "tap",
+    "target_id": "settings-button",
+    "text": null,
+    "reason": "Open Settings",
+    "needs_approval": true
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "target": "settings-button",
+      "text": null,
+      "reason": "Open Settings",
+      "needs_approval": true
+    },
+    {
+      "action": "done",
+      "target": null,
+      "text": null,
+      "reason": "Task complete",
+      "needs_approval": false
+    }
+  ],
+  "error": null
+}

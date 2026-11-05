@@ -12,9 +12,9 @@
 
 [![Platform](https://img.shields.io/badge/Platform-Android_14+_|_SDK_37-94465F?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/)
 [![Compose](https://img.shields.io/badge/UI-Jetpack_Compose_Material_3-C66B88?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Reasoning](https://img.shields.io/badge/Reasoning-Gemma_4_E2B-725AA8?style=for-the-badge&logo=google&logoColor=white)](https://github.com/google/gemma_pytorch)
+[![Reasoning](https://img.shields.io/badge/Reasoning-qwen2.5%3A3b-725AA8?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.com/library/qwen2.5)
 [![Backend](https://img.shields.io/badge/Backend-FastAPI_0.115+-00897B?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Speech](https://img.shields.io/badge/Speech_AI-Eleven Labs_(saaras:v3_|_bulbul:v3)-00897B?style=for-the-badge)](https://elevenlabs.io/)
+[![Speech](https://img.shields.io/badge/Speech_AI-Sarvam_(saaras:v3_|_bulbul:v3)-00897B?style=for-the-badge)](https://www.sarvam.ai/)
 [![Runtime](https://img.shields.io/badge/Runtime-Ollama_Local-725AA8?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.com/)
 
 [The Problem](#-the-problem) · [What It Does](#-what-handsfree-ai-does) · [Main Features](#-main-features) · [System Architecture](#-system-architecture) · [How It Works](#-how-it-works) · [Tech Stack](#-technology-stack) · [Getting Started](#-getting-started) · [API Reference](#-api-endpoints-reference) · [Status](#-current-implementation-status) · [Safety & Privacy](#-safety-and-privacy)
@@ -114,7 +114,7 @@ flowchart TD
 
     subgraph ExternalEngines["🧠 AI & Speech Processing"]
         Ollama["Local Ollama Instance<br/>(http://127.0.0.1:11434)"]
-        GemmaModel["Gemma 4 E2B<br/>(Single-Step Action Proposal)"]
+        QwenModel["qwen2.5:3b<br/>(Single-Step Action Proposal)"]
         SarvamCloud["Sarvam AI API<br/>(saaras:v3 STT · bulbul:v3 TTS)"]
     end
 
@@ -127,12 +127,12 @@ flowchart TD
 
     TaskController -->|"Observe Request"| AccessService
     AccessService -->|"Sanitized Screen Hierarchy"| TaskController
-    TaskController -->|"POST /agent/next-action"| FastAPI
+    TaskController -->|"POST /plan"| FastAPI
 
     FastAPI --> SchemaGen
     SchemaGen -->|"Strict JSON Schema + Prompt"| Ollama
-    Ollama --> GemmaModel
-    GemmaModel -->|"Constrained JSON Action"| FastAPI
+    Ollama --> QwenModel
+    QwenModel -->|"Constrained JSON Action"| FastAPI
     FastAPI --> Contracts
     Contracts -->|"ActionProposal"| TaskController
 
@@ -156,7 +156,7 @@ HandsFree AI operates in a closed **Observe → Reason → Act → Verify → Re
 </div>
 
 1. **Observe:** When a task begins, `AgentAccessibilityService` inspects the active application window. It extracts visible, interactive controls (IDs, text labels, roles, and allowed actions such as `click`, `type_text`, `scroll`), assigning a cryptographic observation fingerprint (`observation_id`). Protected inputs (passwords, PINs, OTPs) are filtered out immediately.
-2. **Reason:** The filtered screen elements, task goal, user constraints, and recent action receipts are posted to `/agent/next-action`. The backend constructs a strict JSON grammar where `observation_id` is fixed as a constant and `target_id` is an enum of valid screen element IDs. Gemma 4 E2B proposes **exactly one** structured action.
+2. **Reason:** The filtered screen elements, task goal, user constraints, and recent action receipts are posted to `/plan`. The backend grounds actions in the supplied screen element IDs. Qwen 2.5 proposes **one next action**.
 3. **Validate:** `SafetyPolicyEngine` evaluates the proposal on Android:
    - *Stale Check:* If the user or app shifted the screen during model inference (`action.observationId != currentScreen.id`), the action is rejected and the screen is re-observed.
    - *Scope Check:* The application package must belong to approved task packages.
@@ -185,20 +185,20 @@ sequenceDiagram
     Note over App: Continuous VAD active (5s pause triggers submission)
 
     User->>App: Spoken command: "Order snacks for 5 PM"
-    App->>Bridge: POST /voice/transcribe (audio_base64, en-IN)
+    App->>Bridge: POST /transcribe (multipart audio file)
     Bridge->>Sarvam: POST /speech-to-text (saaras:v3)
     Sarvam-->>Bridge: {"transcript": "Order snacks for 5 PM"}
     Bridge-->>App: Return transcript
     
     App->>Acc: observe() -> Retrieve interactive nodes
     Acc-->>App: ScreenObservation (obs-01, Launcher, elements)
-    App->>Bridge: POST /agent/next-action (Goal, obs-01, apps)
-    Bridge->>Ollama: POST /api/chat (Grounded schema, Gemma 4 E2B)
+    App->>Bridge: POST /plan (Goal, obs-01, elements)
+    Bridge->>Ollama: POST /api/generate (Grounded plan, qwen2.5:3b)
     Ollama-->>Bridge: ActionProposal: open_app("com.application.zomato")
     Bridge-->>App: Validated proposal
     
     App->>App: SafetyPolicyEngine: Evaluates action -> CONFIRM
-    App->>Bridge: POST /voice/synthesize ("Open Zomato?")
+    App->>Bridge: POST /speak?text=Open%20Zomato%3F
     Bridge->>Sarvam: POST /text-to-speech (bulbul:v3, speaker: shubh)
     Sarvam-->>Bridge: Audio WAV stream
     Bridge-->>App: Play WAV + Show Floating Panel
@@ -227,11 +227,11 @@ flowchart TD
     VAD -->|Silence Detected| LockCheck{Keyguard Locked<br/>or Private Field?}
     LockCheck -->|Yes| Abort[Abort Voice Session &<br/>Protect User Privacy]
     LockCheck -->|No| Encode[Base64 Audio Encoding]
-    Encode --> BridgeSTT[POST /voice/transcribe]
+    Encode --> BridgeSTT[POST /transcribe]
     BridgeSTT --> SarvamSTT[Sarvam AI saaras:v3<br/>en-IN / kn-IN Transcription]
     SarvamSTT --> Controller[AgentController<br/>Command / Reply Parsing]
     Controller --> TTSCheck{Response Required?}
-    TTSCheck -->|Yes| BridgeTTS[POST /voice/synthesize]
+    TTSCheck -->|Yes| BridgeTTS[POST /speak]
     BridgeTTS --> SarvamTTS[Sarvam AI bulbul:v3<br/>Speaker: shubh]
     SarvamTTS --> Player[Android MediaPlayer<br/>Spoken Response]
     Player -->|Playback Finishes| VSS
@@ -256,7 +256,7 @@ flowchart TD
 | **Networking (Mobile)** | OkHttp 4.12.0 & Coroutines | Resilient asynchronous HTTP client with timeout management |
 | **Local Bridge Server** | FastAPI 0.115+ & Uvicorn | Async Python loopback server (`127.0.0.1:8000`) |
 | **Data Contracts** | Pydantic v2 (Strict Mode) | Bounded, strongly-typed wire request/response validation |
-| **Local Reasoning AI** | Google Gemma 4 E2B via Ollama | Local reasoning model running at zero external API cost |
+| **Local Reasoning AI** | qwen2.5:3b via Ollama | Local reasoning model running at zero external API cost |
 | **Speech-to-Text (STT)** | Sarvam AI (`saaras:v3`) | Low-latency Indian English (`en-IN`) and Kannada (`kn-IN`) ASR |
 | **Text-to-Speech (TTS)** | Sarvam AI (`bulbul:v3`) | Natural speech synthesis (`shubh` voice model) |
 | **Testing Frameworks** | Pytest, JUnit 4, Compose UI Test | Automated contract, schema, safety policy, and UI tests |
@@ -308,7 +308,7 @@ The backend operates strictly on `127.0.0.1:8000`. It acts as an intelligent pro
 
 ## 🧠 Ollama and Gemma Integration
 
-HandsFree AI uses Google's lightweight, high-performance **Gemma 4 E2B** model hosted locally through [Ollama](https://ollama.com).
+HandsFree AI uses **qwen2.5:3b** hosted locally through [Ollama](https://ollama.com).
 
 ### Dynamic Schema Grounding (`model_schema.py`)
 To prevent hallucinations, HandsFree AI generates an action-specific JSON schema on every reasoning step:
@@ -322,15 +322,15 @@ To prevent hallucinations, HandsFree AI generates an action-specific JSON schema
 
 HandsFree AI integrates with [Sarvam AI](https://www.sarvam.ai/) to deliver low-latency, natural voice interactions in Indian languages:
 
-- **Speech-to-Text (`/voice/transcribe`):**
+- **Speech-to-Text (`POST /transcribe`):**
   - Model: `saaras:v3`
   - Mode: `transcribe`
   - Supported Languages: Indian English (`en-IN`) and Kannada (`kn-IN`)
-- **Text-to-Speech (`/voice/synthesize`):**
+- **Text-to-Speech (`POST /speak?text=...`):**
   - Model: `bulbul:v3`
   - Speaker: `shubh`
   - Output Audio Codec: `wav`
-- **Graceful Fallback:** If `SARVAM_API_KEY` is omitted, `/health` returns `voice_configured: false`. The Android app detects this and gracefully defaults to on-screen text input and visual responses without breaking the planning pipeline.
+- **Graceful Fallback:** If `SARVAM_API_KEY` is omitted, voice endpoints return HTTP 503 with a clear JSON error. `/health` and `/plan` remain available.
 
 ---
 
@@ -341,7 +341,7 @@ HandsFree AI integrates with [Sarvam AI](https://www.sarvam.ai/) to deliver low-
 | **Development Laptop** | Windows 10/11 | Host machine for backend and model execution |
 | **Python** | Python 3.12+ | Required for FastAPI backend |
 | **Local LLM Runner** | [Ollama](https://ollama.com) | Running locally on `http://127.0.0.1:11434` |
-| **Model** | `gemma4:e2b` | Pulled in Ollama (`ollama pull gemma4:e2b`) |
+| **Model** | `qwen2.5:3b` | Pulled in Ollama (`ollama pull qwen2.5:3b`) |
 | **Android Tools** | Android SDK 37, Platform-Tools | `adb.exe` in `LOCALAPPDATA` |
 | **Java Development Kit** | JDK 17+ or Android Studio JBR | Builds verified with JBR 25 |
 | **Physical Android Device** | Android 14+ (API 34/37) | USB debugging enabled; connected via USB data cable |
@@ -368,33 +368,33 @@ pip install -r backend\requirements.txt
 
 ### Step 2: Configure Environment Variables
 
-Copy the example template to `.env.local`:
+Copy the example template to `.env`:
 
 ```powershell
-Copy-Item .env.example .env.local
+Copy-Item .env.example .env
 ```
 
-Edit `.env.local` to configure your settings:
+Edit `.env` to configure your settings:
 
 ```ini
 # Optional Sarvam AI key for Kannada and English voice
-SARVAM_API_KEY=your_sarvam_api_key_here
+SARVAM_API_KEY=
 
 # Local Ollama endpoint and model configuration
-OLLAMA_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=gemma4:e2b
-MODEL_TIMEOUT_SECONDS=120
+OLLAMA_HOST=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen2.5:3b
+OLLAMA_TIMEOUT=120
 ```
 
 > [!NOTE]
-> Environment priority: Process environment variables → `.env.local` → `.env`. Never commit `.env.local` to version control.
+> Environment priority: Process environment variables, then `.env`. `.env` and `.env.local` are ignored by Git. Keep the Sarvam key on the backend only.
 
 ### Step 3: Pull the Reasoning Model
 
-Ensure Ollama is installed and running, then pull the Gemma model:
+Ensure Ollama is installed and running, then pull the planner model:
 
 ```powershell
-ollama pull gemma4:e2b
+ollama pull qwen2.5:3b
 ollama list
 ```
 
@@ -419,21 +419,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-local.ps1 -Ope
 The script automatically:
 1. Verifies or launches local Ollama on port `11434`.
 2. Starts the FastAPI backend on port `8000`.
-3. Verifies that `gemma4:e2b` is loaded and ready.
+3. Verifies that `qwen2.5:3b` is loaded and ready.
 4. Executes `adb reverse tcp:8000 tcp:8000` over your USB connection.
 5. Launches HandsFree AI directly on your phone.
 
-### Manual Backend Launch (Terminal)
+### Manual Backend Launch (from the repository root)
 
 ```powershell
-.\.venv\Scripts\python.exe -m backend.run
+uvicorn backend.app:app --reload --host 0.0.0.0 --port 8000
 ```
 
 | Service | Local Address | Description |
 |---|---|---|
 | **Android Bridge API** | `http://127.0.0.1:8000` | FastAPI root |
-| **Health Check** | `http://127.0.0.1:8000/health` | Service status & voice configuration |
-| **Model Status** | `http://127.0.0.1:8000/model/status` | Ollama model reachability |
+| **Health Check** | `http://127.0.0.1:8000/health` | Service and Ollama model readiness |
 | **Interactive API Docs**| `http://127.0.0.1:8000/docs` | Swagger UI documentation |
 | **Ollama Core API** | `http://127.0.0.1:11434` | Raw Ollama daemon |
 
@@ -473,7 +472,7 @@ adb install -r app\build\outputs\apk\debug\app-debug.apk
 
 ## 🎮 How to Use the Application
 
-1. **Launch the App:** Open HandsFree AI. Verify the status banner says `Laptop connected · gemma4:e2b`.
+1. **Launch the App:** Open HandsFree AI. Verify the status banner says `Laptop connected · qwen2.5:3b`.
 2. **Select Language:** Use the **English / ಕನ್ನಡ** toggle on the home screen to set your preferred voice and UI language.
 3. **Start Conversation:** Tap **Start conversation**. Grant microphone permissions if prompted.
 4. **Speak Your Request:** Speak naturally. When you pause for 5 seconds, your speech is automatically transcribed and sent for planning.
@@ -526,6 +525,8 @@ HandsFree: 🗣️ "Your cart contains 2 x Veg Grilled Sandwich. Labeled payable
 
 ## 🔌 API Endpoints Reference
 
+The current backend request and response shapes, action examples, and offline mock sample are documented in [`docs/api_contract.md`](docs/api_contract.md).
+
 ### 1. `GET /health`
 Verifies backend connectivity and service configuration.
 
@@ -533,138 +534,22 @@ Verifies backend connectivity and service configuration.
 ```json
 {
   "status": "ok",
-  "service": "HandsFree AI",
-  "model": "gemma4:e2b",
-  "voice_configured": true
+  "model": "qwen2.5:3b",
+  "ollama_reachable": true,
+  "model_ready": true
 }
 ```
 
 ---
 
-### 2. `GET /model/status`
-Checks if the configured Ollama model is downloaded and ready.
+### 2. `POST /plan`
+Accepts the goal and visible screen elements and returns one grounded next action. See [`docs/api_contract.md`](docs/api_contract.md) for request and response JSON, action examples, and the offline mock response.
 
-**Response (200 OK):**
-```json
-{
-  "model": "gemma4:e2b",
-  "available": true
-}
-```
+### 3. `POST /speak?text=...`
+Synthesizes text to WAV audio via Sarvam AI. With no `SARVAM_API_KEY`, returns HTTP 503 and `{"error":"voice disabled: SARVAM_API_KEY not set"}`.
 
----
-
-### 3. `POST /agent/next-action`
-Grounded next-step planning endpoint. Accepts sanitized screen trees and returns a strictly validated action proposal.
-
-**Request Body (`NextActionRequest`):**
-```json
-{
-  "task_id": "task-uuid-42",
-  "goal": "Calculate 250 + 150",
-  "observation_id": "obs-9812",
-  "response_language": "en-IN",
-  "task_state": "PLANNING",
-  "screen": {
-    "package_name": "com.oneplus.calculator",
-    "blocked_reason": null,
-    "elements": [
-      {
-        "id": "btn_2",
-        "text": "2",
-        "description": "Two",
-        "role": "android.widget.Button",
-        "actions": ["click"],
-        "bounds": [100, 500, 250, 650],
-        "editable": false
-      },
-      {
-        "id": "btn_plus",
-        "text": "+",
-        "description": "Add",
-        "role": "android.widget.Button",
-        "actions": ["click"],
-        "bounds": [400, 500, 550, 650],
-        "editable": false
-      }
-    ]
-  },
-  "available_apps": [
-    {
-      "name": "Calculator",
-      "package_name": "com.oneplus.calculator"
-    }
-  ],
-  "allowed_actions": ["click", "finish_task", "ask_user"],
-  "history": [],
-  "constraints": [],
-  "previous_action_result": null
-}
-```
-
-**Response Body (`ActionProposal`):**
-```json
-{
-  "action": "click",
-  "target_id": "btn_2",
-  "arguments": {
-    "package_name": null,
-    "text": null,
-    "direction": null,
-    "message": null,
-    "expected_text": null,
-    "evidence_ids": [],
-    "cart_item_ids": [],
-    "cart_total_ids": []
-  },
-  "reason": "Pressing 2 to enter the first digit of the expression.",
-  "observation_id": "obs-9812",
-  "requires_confirmation": false
-}
-```
-
----
-
-### 4. `POST /voice/transcribe`
-Converts Base64-encoded speech into text via Sarvam AI.
-
-**Request Body (`TranscriptionRequest`):**
-```json
-{
-  "audio_base64": "UklGRiQAAABXQVZFZm10IBAAAAABAAEA...",
-  "language_code": "en-IN",
-  "audio_format": "m4a"
-}
-```
-
-**Response Body:**
-```json
-{
-  "transcript": "Open calculator and add 50 and 70",
-  "language_code": "en-IN"
-}
-```
-
----
-
-### 5. `POST /voice/synthesize`
-Synthesizes spoken text into natural WAV audio via Sarvam AI.
-
-**Request Body (`SynthesisRequest`):**
-```json
-{
-  "text": "Shall I open Calculator for you?",
-  "language_code": "en-IN"
-}
-```
-
-**Response Body:**
-```json
-{
-  "audio_base64": "UklGRtgBAABXQVZFZm10IBAAAAAB...",
-  "mime_type": "audio/wav"
-}
-```
+### 4. `POST /transcribe`
+Accepts a multipart `file` upload and returns `{"text":"recognized words"}`. With no key, returns the same HTTP 503 JSON error as `/speak`.
 
 ---
 
@@ -808,7 +693,7 @@ As outlined in [PRODUCT.md](PRODUCT.md), HandsFree AI is progressing through eig
 ## Acknowledgements
 
 ### Third-Party & Open Source Acknowledgements
-- **[Google Gemma](https://ai.google.dev/gemma):** Open weights foundation model providing lightweight, privacy-preserving reasoning.
+- **[Qwen 2.5](https://ollama.com/library/qwen2.5):** Local reasoning model served through Ollama.
 - **[Ollama](https://ollama.com):** Local LLM runner enabling fast offline model execution.
 - **[Sarvam AI](https://www.sarvam.ai/):** Indic speech technology powering accurate English and Kannada voice recognition and synthesis.
 - **[FastAPI](https://fastapi.tiangolo.com/):** High-performance Python web framework for local loopback coordination.

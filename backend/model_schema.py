@@ -8,7 +8,10 @@ from typing import Optional
 import httpx
 from pydantic import BaseModel, Field
 
-from contracts import Action, ActionType, PlanRequest, PlanResponse, Step, UIElement
+try:
+    from .contracts import Action, ActionType, PlanRequest, PlanResponse, Step, UIElement
+except ImportError:  # Support tests and Uvicorn launched from backend/.
+    from contracts import Action, ActionType, PlanRequest, PlanResponse, Step, UIElement
 
 MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 MODEL_NAME = MODEL
@@ -37,7 +40,7 @@ SENSITIVE_KEYWORDS = (
     "confirm payment", "pay now", "payment", "transfer",
 )
 _SENSITIVE_RE = re.compile(
-    r"\\b(" + "|".join(re.escape(k) for k in SENSITIVE_KEYWORDS) + r")\\b",
+    r"\b(" + "|".join(re.escape(k) for k in SENSITIVE_KEYWORDS) + r")\b",
     re.IGNORECASE,
 )
 
@@ -60,14 +63,14 @@ def _as_str(value) -> Optional[str]:
 
 def _extract_json(raw: str):
     text = raw.strip()
-    fence = re.search(r"```(?:json)?\\s*([\\s\\S]*?)\\s*```", text)
+    fence = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
     if fence:
         text = fence.group(1).strip()
     try:
         return json.loads(text)
     except Exception:
         pass
-    match = re.search(r"(\\{[\\s\\S]*\\}|\\[[\\s\\S]*\\])", text)
+    match = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", text)
     if match:
         try:
             return json.loads(match.group(1))

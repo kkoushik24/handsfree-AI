@@ -1,12 +1,9 @@
-"""Backend regression tests. Run from backend/: pytest. No Ollama or ElevenLabs key needed."""
-import asyncio
-
+"""Backend regression tests. Run from the repository root with pytest."""
 import httpx
 from fastapi.testclient import TestClient
 
 import app as app_module
 import model_schema
-import voice
 from app import app
 from contracts import ActionType, Step, UIElement
 from model_schema import apply_safety, parse_steps
@@ -113,7 +110,10 @@ def test_safety_blocks_payment_tap():
 
 
 def test_safety_word_boundary_allows_pinterest():
-    plan = apply_safety([Step(action=ActionType.tap, target="Pinterest", reason="open")])
+    plan = apply_safety(
+        [Step(action=ActionType.tap, target="Pinterest", reason="open")],
+        [UIElement(id="pinterest", text="Pinterest")],
+    )
     assert plan.steps[0].action == ActionType.tap
 
 
@@ -149,9 +149,10 @@ def test_parse_steps_aliases():
 
 # ------------------------------------------------------------------ voice
 def test_speak_without_key_returns_503(monkeypatch):
-    monkeypatch.setattr(voice, "ELEVENLABS_API_KEY", "")
-    voice._tts_cache.clear()
-    assert client.post("/speak", params={"text": "hello"}).status_code == 503
+    monkeypatch.delenv("SARVAM_API_KEY", raising=False)
+    response = client.post("/speak", params={"text": "hello"})
+    assert response.status_code == 503
+    assert response.json() == {"error": "voice disabled: SARVAM_API_KEY not set"}
 
 
 def test_speak_returns_audio(monkeypatch):
@@ -161,36 +162,19 @@ def test_speak_returns_audio(monkeypatch):
     r = client.post("/speak", params={"text": "hello"})
     assert r.status_code == 200
     assert r.content == b"abc"
-    assert r.headers["content-type"] == "audio/mpeg"
-
-
-def test_tts_cache_avoids_second_call(monkeypatch):
-    class FakeResp:
-        content = b"audio"
-        def raise_for_status(self):
-            pass
-
-    class FakeClient:
-        calls = 0
-        def __init__(self, *a, **k):
-            pass
-        async def __aenter__(self):
-            return self
-        async def __aexit__(self, *a):
-            return False
-        async def post(self, *a, **k):
-            FakeClient.calls += 1
-            return FakeResp()
-
-    monkeypatch.setattr(voice, "ELEVENLABS_API_KEY", "test-key")
-    monkeypatch.setattr(voice.httpx, "AsyncClient", FakeClient)
-    voice._tts_cache.clear()
-    assert asyncio.run(voice.text_to_speech("Done")) == b"audio"
-    assert asyncio.run(voice.text_to_speech("Done")) == b"audio"
-    assert FakeClient.calls == 1
+    assert r.headers["content-type"] == "audio/wav"
 
 
 def test_transcribe_without_key_returns_502(monkeypatch):
-    monkeypatch.setattr(voice, "ELEVENLABS_API_KEY", "")
+    monkeypatch.delenv("SARVAM_API_KEY", raising=False)
     r = client.post("/transcribe", files={"file": ("t.mp3", b"fake", "audio/mpeg")})
-    assert r.status_code == 502
+    assert r.status_code == 503
+    assert r.json() == {"error": "voice disabled: SARVAM_API_KEY not set"}
+
+
+def test_voice_disabled_does_not_block_health_or_mock_plan(monkeypatch):
+    monkeypatch.delenv("SARVAM_API_KEY", raising=False)
+    health = client.get("/health")
+    plan_response = client.post("/plan?mock=true", json={"goal": "open settings"})
+    assert health.status_code == 200
+    assert plan_response.status_code == 200

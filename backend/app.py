@@ -1,7 +1,7 @@
 """FastAPI application server for HandsFree AI.
 
-Development:
-    uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+Development (from repository root):
+    uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
 """
 from dotenv import load_dotenv
 
@@ -13,10 +13,16 @@ from fastapi import FastAPI, File, HTTPException, Query, Request, Response, Uplo
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-import model_schema
-from contracts import Health, PlanRequest, PlanResponse
-from model_schema import ollama_status, plan
-from voice import text_to_speech, transcribe_audio
+try:  # Package import when launched from the repository root.
+    from . import model_schema
+    from .contracts import Health, PlanRequest, PlanResponse
+    from .model_schema import ollama_status, plan
+    from .voice import VoiceDisabledError, text_to_speech, transcribe_audio
+except ImportError:  # Compatibility with `uvicorn app:app` from backend/.
+    import model_schema
+    from contracts import Health, PlanRequest, PlanResponse
+    from model_schema import ollama_status, plan
+    from voice import VoiceDisabledError, text_to_speech, transcribe_audio
 
 app = FastAPI(title="HandsFree AI Backend", version="1.2.0")
 
@@ -66,11 +72,13 @@ async def generate_plan(req: PlanRequest, mock: bool = False):
 async def speak(text: str = Query(..., min_length=1, max_length=500)):
     try:
         audio_bytes = await text_to_speech(text)
+    except VoiceDisabledError as exc:
+        return JSONResponse(status_code=503, content={"error": str(exc)})
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
     except httpx.HTTPError:
         raise HTTPException(status_code=502, detail="speech_provider_error")
-    return Response(content=audio_bytes, media_type="audio/mpeg")
+    return Response(content=audio_bytes, media_type="audio/wav")
 
 
 @app.post("/transcribe")
@@ -83,6 +91,8 @@ async def transcribe(file: UploadFile = File(...)):
             content_type=file.content_type or "audio/mpeg",
         )
         return {"text": text}
+    except VoiceDisabledError as exc:
+        return JSONResponse(status_code=503, content={"error": str(exc)})
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
     except httpx.HTTPError:
