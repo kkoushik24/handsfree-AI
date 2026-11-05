@@ -1,5 +1,25 @@
+<<<<<<< HEAD
 ﻿.venv/
 __pycache__/
 *.pyc
 .env
 /handsfree-AI/
+=======
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.idea/
+**/build/
+>>>>>>> 99cf1b3deff1fe91665537f0981e097200812a74
